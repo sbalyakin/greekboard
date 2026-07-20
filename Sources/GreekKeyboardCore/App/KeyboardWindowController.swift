@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
   var onVisibilityChanged: ((Bool) -> Void)?
+  var onOpenSettings: (() -> Void)?
 
   private let viewModel: KeyboardViewModel
   private let settings: SettingsStore
@@ -63,6 +64,7 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
 
     super.init(window: panel)
     panel.delegate = self
+    installSettingsButton(on: panel)
     observeStatusBanner()
   }
 
@@ -138,6 +140,43 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
       clickToTypeEnabled: settings.enableClickToType,
       isAccessibilityGranted: permissions.isAccessibilityGranted
     )
+  }
+
+  private func installSettingsButton(on panel: NSPanel) {
+    guard let titlebar = panel.standardWindowButton(.closeButton)?.superview else { return }
+
+    let hitSize: CGFloat = 16
+    let trailingInset: CGFloat = 10
+
+    let button = HoverHighlightButton(title: "", target: self, action: #selector(openSettings))
+    button.isBordered = false
+    button.bezelStyle = .inline
+    button.setButtonType(.momentaryChange)
+    button.attributedTitle = NSAttributedString(
+      string: "⋯",
+      attributes: [
+        .font: NSFont.systemFont(ofSize: 12, weight: .regular),
+        .foregroundColor: NSColor.secondaryLabelColor
+      ]
+    )
+    button.toolTip = "Settings"
+    button.setAccessibilityLabel("Settings")
+    button.translatesAutoresizingMaskIntoConstraints = false
+    titlebar.addSubview(button)
+    NSLayoutConstraint.activate([
+      button.centerYAnchor.constraint(equalTo: titlebar.centerYAnchor, constant: 1.5),
+      button.trailingAnchor.constraint(
+        equalTo: titlebar.trailingAnchor,
+        constant: -trailingInset
+      ),
+      button.widthAnchor.constraint(equalToConstant: hitSize),
+      button.heightAnchor.constraint(equalToConstant: hitSize)
+    ])
+  }
+
+  @objc
+  private func openSettings() {
+    onOpenSettings?()
   }
 
   private func observeStatusBanner() {
@@ -217,6 +256,58 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
 private final class KeyboardPanel: NSPanel {
   override var canBecomeKey: Bool { false }
   override var canBecomeMain: Bool { false }
+}
+
+private final class HoverHighlightButton: NSButton {
+  private var trackingArea: NSTrackingArea?
+
+  override init(frame frameRect: NSRect) {
+    super.init(frame: frameRect)
+    configureHoverChrome()
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) is unavailable")
+  }
+
+  override func updateTrackingAreas() {
+    super.updateTrackingAreas()
+    if let trackingArea {
+      removeTrackingArea(trackingArea)
+    }
+    let area = NSTrackingArea(
+      rect: bounds,
+      options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+      owner: self,
+      userInfo: nil
+    )
+    trackingArea = area
+    addTrackingArea(area)
+  }
+
+  override func mouseEntered(with event: NSEvent) {
+    super.mouseEntered(with: event)
+    setHoverHighlighted(true)
+  }
+
+  override func mouseExited(with event: NSEvent) {
+    super.mouseExited(with: event)
+    setHoverHighlighted(false)
+  }
+
+  private func configureHoverChrome() {
+    wantsLayer = true
+    layer?.cornerRadius = 5
+    layer?.backgroundColor = .clear
+  }
+
+  private func setHoverHighlighted(_ isHighlighted: Bool) {
+    let color: NSColor = isHighlighted
+      ? NSColor.labelColor.withAlphaComponent(0.1)
+      : .clear
+    layer?.backgroundColor = color.cgColor
+  }
 }
 
 private final class ResizeCursorHostingView<Content: View>: NSHostingView<Content> {

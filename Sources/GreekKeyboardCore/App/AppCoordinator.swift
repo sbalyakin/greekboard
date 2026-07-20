@@ -94,6 +94,9 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     keyboardWindowController.onVisibilityChanged = { [weak self] isVisible in
       self?.settings.setKeyboardVisible(isVisible)
     }
+    keyboardWindowController.onOpenSettings = { [weak self] in
+      self?.showSettings()
+    }
   }
 
   private func configureInputMonitoring(viewModel: KeyboardViewModel) {
