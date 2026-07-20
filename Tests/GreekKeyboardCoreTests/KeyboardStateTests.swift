@@ -185,4 +185,15 @@ final class KeyboardStateTests: XCTestCase {
       )
     }
   }
+
+  func testKeyboardWindowContentSizeClampsToMinimumScale() {
+    XCTAssertEqual(
+      KeyboardWindowMetrics.clampedScale(0.5),
+      KeyboardWindowMetrics.minimumScale
+    )
+    XCTAssertEqual(
+      KeyboardWindowMetrics.contentSize(for: KeyboardWindowMetrics.clampedScale(0.5)),
+      KeyboardWindowMetrics.minimumContentSize
+    )
+  }
 }

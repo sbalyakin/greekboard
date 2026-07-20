@@ -39,7 +39,11 @@ struct SettingsView: View {
             Text(appearance.title).tag(appearance)
           }
         }
-        slider("Keyboard Size", value: $settings.keyboardScale, range: 0.75...1.4)
+        slider(
+          "Keyboard Size",
+          value: $settings.keyboardScale,
+          range: Double(KeyboardWindowMetrics.minimumScale)...Double(KeyboardWindowMetrics.maximumScale)
+        )
         slider("Key Corner Radius", value: $settings.keyCornerRadius, range: 2...14)
         Toggle("Key Press Animation", isOn: $settings.keyPressAnimation)
       }

@@ -71,7 +71,9 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
 
   func resize(to scale: Double) {
     guard let window else { return }
-    let contentSize = KeyboardWindowMetrics.contentSize(for: CGFloat(scale))
+    let contentSize = KeyboardWindowMetrics.contentSize(
+      for: KeyboardWindowMetrics.clampedScale(CGFloat(scale))
+    )
     let frameSize = window.frameRect(
       forContentRect: NSRect(origin: .zero, size: contentSize)
     ).size
@@ -97,12 +99,21 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
     onVisibilityChanged?(false)
   }
 
+  func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
+    let minFrame = sender.frameRect(
+      forContentRect: NSRect(origin: .zero, size: KeyboardWindowMetrics.minimumContentSize)
+    ).size
+    return NSSize(
+      width: max(frameSize.width, minFrame.width),
+      height: max(frameSize.height, minFrame.height)
+    )
+  }
+
   private static func normalizeContentAspectRatio(of window: NSWindow) {
     let contentSize = window.contentRect(forFrameRect: window.frame).size
     let scale = max(
       contentSize.width / KeyboardWindowMetrics.baseContentSize.width,
-      KeyboardWindowMetrics.minimumContentWidth
-        / KeyboardWindowMetrics.baseContentSize.width
+      KeyboardWindowMetrics.minimumScale
     )
     let normalizedContentSize = KeyboardWindowMetrics.contentSize(for: scale)
     let normalizedFrameSize = window.frameRect(
