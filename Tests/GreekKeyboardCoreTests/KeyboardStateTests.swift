@@ -174,4 +174,15 @@ final class KeyboardStateTests: XCTestCase {
       KeyboardLayoutMetrics.baseSize.height
     )
   }
+
+  func testKeyboardWindowSizesPreserveAspectRatio() {
+    for scale in [0.75, 1, 1.4] {
+      let size = KeyboardWindowMetrics.contentSize(for: scale)
+      XCTAssertEqual(
+        size.width / size.height,
+        KeyboardWindowMetrics.aspectRatio,
+        accuracy: 0.000_001
+      )
+    }
+  }
 }

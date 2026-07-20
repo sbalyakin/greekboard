@@ -7,20 +7,16 @@ struct KeyboardView: View {
   @ObservedObject var permissions: MacPermissionAdapter
 
   var body: some View {
-    VStack(spacing: 0) {
-      GeometryReader { proxy in
-        let scale = KeyboardLayoutMetrics.scale(to: proxy.size)
+    GeometryReader { proxy in
+      let scale = KeyboardWindowMetrics.scale(to: proxy.size)
+      VStack(spacing: 0) {
         keyboard(scale: scale)
-          .frame(
-            width: proxy.size.width,
-            height: proxy.size.height,
-            alignment: .center
-          )
-          .clipped()
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+        statusBanner(scale: scale)
       }
-      statusBanner
+      .padding(10 * scale)
+      .frame(width: proxy.size.width, height: proxy.size.height)
     }
-    .padding(10)
     .background(.regularMaterial)
   }
 
@@ -38,9 +34,9 @@ struct KeyboardView: View {
   }
 
   @ViewBuilder
-  private var statusBanner: some View {
+  private func statusBanner(scale: CGFloat) -> some View {
     if let message = viewModel.insertionErrorMessage {
-      HStack(spacing: 8) {
+      HStack(spacing: 8 * scale) {
         Image(systemName: "exclamationmark.triangle.fill")
           .foregroundStyle(.yellow)
         Text(message)
@@ -66,11 +62,11 @@ struct KeyboardView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Dismiss")
       }
-      .font(.caption)
-      .padding(.horizontal, 8)
-      .frame(height: 28)
+      .font(.system(size: 11 * scale))
+      .padding(.horizontal, 8 * scale)
+      .frame(height: 28 * scale)
     } else if settings.enableClickToType && !permissions.isAccessibilityGranted {
-      HStack(spacing: 8) {
+      HStack(spacing: 8 * scale) {
         Image(systemName: "eye")
         Text("Viewer mode. Allow Accessibility access to type by clicking keys.")
           .lineLimit(1)
@@ -80,9 +76,9 @@ struct KeyboardView: View {
         }
         .controlSize(.small)
       }
-      .font(.caption)
-      .padding(.horizontal, 8)
-      .frame(height: 28)
+      .font(.system(size: 11 * scale))
+      .padding(.horizontal, 8 * scale)
+      .frame(height: 28 * scale)
     }
   }
 

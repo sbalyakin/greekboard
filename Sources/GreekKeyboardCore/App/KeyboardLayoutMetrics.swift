@@ -8,13 +8,6 @@ enum KeyboardLayoutMetrics {
   static let verticalSpacing: CGFloat = 7
   static let padding: CGFloat = 10
 
-  static func scale(to availableSize: CGSize) -> CGFloat {
-    min(
-      availableSize.width / baseSize.width,
-      availableSize.height / baseSize.height
-    )
-  }
-
   static func contentWidth(for row: KeyboardRow) -> CGFloat {
     let keysWidth = row.keys.reduce(CGFloat.zero) { width, key in
       width + keyWidth * key.width
