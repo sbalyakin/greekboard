@@ -18,7 +18,7 @@ public extension KeyboardLayout {
         character("0", 29, "0", "0", "0", ")"),
         character("minus", 27, "-", "Minus", "-", "_"),
         character("equals", 24, "=", "Equals", "=", "+"),
-        special("delete", 51, "delete", "Delete", width: 1.5, key: .delete)
+        special("delete", 51, "delete", "Delete", width: 2, key: .delete)
       ]),
       KeyboardRow(id: "top", keys: [
         special("tab", 48, "tab", "Tab", width: 1.5, key: .tab),
@@ -57,7 +57,7 @@ public extension KeyboardLayout {
         letter("l", 37, "L", "Lambda", "λ", "Λ"),
         deadKey("semicolon", 41, ";", "Acute Accent"),
         character("quote", 39, "'", "Apostrophe", "'", "\""),
-        special("return", 36, "return", "Return", width: 2.25, key: .returnKey)
+        special("return", 36, "return", "Return", width: 2.375, key: .returnKey)
       ]),
       KeyboardRow(id: "bottom", keys: [
         modifier("leftShift", 56, "shift", "Left Shift", width: 2.25, .shift),
@@ -71,13 +71,13 @@ public extension KeyboardLayout {
         character("comma", 43, ",", "Comma", ",", "<"),
         character("period", 47, ".", "Period", ".", ">"),
         character("slash", 44, "/", "Slash", "/", "?"),
-        modifier("rightShift", 60, "shift", "Right Shift", width: 2.75, .shift)
+        modifier("rightShift", 60, "shift", "Right Shift", width: 3, .shift)
       ]),
       KeyboardRow(id: "modifiers", keys: [
         modifier("leftControl", 59, "control", "Left Control", width: 1.5, .control),
         modifier("leftOption", 58, "option", "Left Option", width: 1.25, .option),
         modifier("leftCommand", 55, "command", "Left Command", width: 1.5, .command),
-        special("space", 49, "", "Space", width: 5, key: .space),
+        special("space", 49, "", "Space", width: 7.375, key: .space),
         modifier("rightCommand", 54, "command", "Right Command", width: 1.5, .command),
         modifier("rightOption", 61, "option", "Right Option", width: 1.25, .option),
         modifier("rightControl", 62, "control", "Right Control", width: 1.5, .control)

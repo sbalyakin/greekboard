@@ -161,12 +161,13 @@ final class KeyboardStateTests: XCTestCase {
     }
   }
 
-  func testKeyboardRowsFitInsideScalingReferenceSize() {
+  func testKeyboardRowsMatchScalingReferenceWidth() {
     for row in layout.rows {
-      XCTAssertLessThanOrEqual(
+      XCTAssertEqual(
         KeyboardLayoutMetrics.contentWidth(for: row),
         KeyboardLayoutMetrics.baseSize.width,
-        "Row \(row.id) exceeds the scaling reference width"
+        accuracy: 0.000_001,
+        "Row \(row.id) must match the scaling reference width"
       )
     }
     XCTAssertLessThanOrEqual(
