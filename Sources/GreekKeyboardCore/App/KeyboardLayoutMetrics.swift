@@ -1,12 +1,12 @@
 import CoreGraphics
 
 enum KeyboardLayoutMetrics {
-  static let baseSize = CGSize(width: 820, height: 280)
+  static let baseSize = CGSize(width: 804, height: 264)
   static let keyWidth: CGFloat = 48
   static let keyHeight: CGFloat = 46
   static let horizontalSpacing: CGFloat = 6
   static let verticalSpacing: CGFloat = 7
-  static let padding: CGFloat = 10
+  static let padding: CGFloat = 3
 
   static func contentWidth(for row: KeyboardRow) -> CGFloat {
     let keysWidth = row.keys.reduce(CGFloat.zero) { width, key in

@@ -186,6 +186,40 @@ final class KeyboardStateTests: XCTestCase {
     }
   }
 
+  func testKeyboardWindowContentSizeGrowsForStatusBanner() {
+    let withoutBanner = KeyboardWindowMetrics.contentSize(for: 1, showsStatusBanner: false)
+    let withBanner = KeyboardWindowMetrics.contentSize(for: 1, showsStatusBanner: true)
+    XCTAssertEqual(withoutBanner.width, withBanner.width)
+    XCTAssertEqual(
+      withBanner.height,
+      withoutBanner.height + KeyboardWindowMetrics.statusBannerHeight
+    )
+  }
+
+  func testStatusBannerVisibilityMatchesPermissionsMessage() {
+    XCTAssertTrue(
+      KeyboardWindowMetrics.showsStatusBanner(
+        hasInsertionError: false,
+        clickToTypeEnabled: true,
+        isAccessibilityGranted: false
+      )
+    )
+    XCTAssertFalse(
+      KeyboardWindowMetrics.showsStatusBanner(
+        hasInsertionError: false,
+        clickToTypeEnabled: true,
+        isAccessibilityGranted: true
+      )
+    )
+    XCTAssertTrue(
+      KeyboardWindowMetrics.showsStatusBanner(
+        hasInsertionError: true,
+        clickToTypeEnabled: false,
+        isAccessibilityGranted: true
+      )
+    )
+  }
+
   func testKeyboardWindowContentSizeClampsToMinimumScale() {
     XCTAssertEqual(
       KeyboardWindowMetrics.clampedScale(0.5),

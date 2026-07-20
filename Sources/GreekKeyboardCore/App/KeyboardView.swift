@@ -6,15 +6,26 @@ struct KeyboardView: View {
   @ObservedObject var settings: SettingsStore
   @ObservedObject var permissions: MacPermissionAdapter
 
+  private var showsStatusBanner: Bool {
+    KeyboardWindowMetrics.showsStatusBanner(
+      hasInsertionError: viewModel.insertionErrorMessage != nil,
+      clickToTypeEnabled: settings.enableClickToType,
+      isAccessibilityGranted: permissions.isAccessibilityGranted
+    )
+  }
+
   var body: some View {
     GeometryReader { proxy in
-      let scale = KeyboardWindowMetrics.scale(to: proxy.size)
+      let scale = KeyboardWindowMetrics.scale(
+        to: proxy.size,
+        showsStatusBanner: showsStatusBanner
+      )
       VStack(spacing: 0) {
         keyboard(scale: scale)
           .frame(maxWidth: .infinity, maxHeight: .infinity)
         statusBanner(scale: scale)
       }
-      .padding(10 * scale)
+      .padding(KeyboardLayoutMetrics.padding * scale)
       .frame(width: proxy.size.width, height: proxy.size.height)
     }
     .background(.regularMaterial)
@@ -64,7 +75,7 @@ struct KeyboardView: View {
       }
       .font(.system(size: 11 * scale))
       .padding(.horizontal, 8 * scale)
-      .frame(height: 28 * scale)
+      .frame(height: KeyboardWindowMetrics.statusBannerHeight * scale)
     } else if settings.enableClickToType && !permissions.isAccessibilityGranted {
       HStack(spacing: 8 * scale) {
         Image(systemName: "eye")
@@ -78,7 +89,7 @@ struct KeyboardView: View {
       }
       .font(.system(size: 11 * scale))
       .padding(.horizontal, 8 * scale)
-      .frame(height: 28 * scale)
+      .frame(height: KeyboardWindowMetrics.statusBannerHeight * scale)
     }
   }
 
