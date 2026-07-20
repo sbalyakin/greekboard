@@ -97,6 +97,7 @@ struct KeyboardView: View {
     let pressed = settings.highlightPhysicalKeyPresses && viewModel.isPressed(key)
     let active = viewModel.isActive(key)
     let isEnabled = viewModel.isEnabled(key)
+    let displayText = viewModel.displayText(for: key)
 
     return Button {
       viewModel.press(key, clickCount: NSApp.currentEvent?.clickCount ?? 1)
@@ -106,7 +107,7 @@ struct KeyboardView: View {
           .fill(keyColor(isPressed: pressed, isActive: active))
           .shadow(color: .black.opacity(0.18), radius: scale, y: scale)
 
-        Text(viewModel.displayText(for: key))
+        Text(displayText)
           .font(
             .system(
               size: 20 * settings.keyLabelScale * scale,
@@ -132,6 +133,7 @@ struct KeyboardView: View {
       .contentShape(Rectangle())
     }
     .buttonStyle(.plain)
+    .disabled(!isEnabled)
     .opacity(isEnabled ? 1 : 0.58)
     .frame(
       width: KeyboardLayoutMetrics.keyWidth * key.width * scale,

@@ -82,15 +82,20 @@ final class KeyboardStateTests: XCTestCase {
     XCTAssertNil(state.activeDeadKey)
   }
 
-  func testDeadKeyAndIncompatibleCharacterAreBothInserted() throws {
+  func testDeadKeyAndIncompatibleCharacterInsertNothing() throws {
     var state = KeyboardState()
     let acute = try XCTUnwrap(layout.key(for: PhysicalKeyCode(rawValue: 41)))
     let beta = try XCTUnwrap(layout.key(for: PhysicalKeyCode(rawValue: 11)))
+    let alpha = try XCTUnwrap(layout.key(for: PhysicalKeyCode(rawValue: 0)))
 
     _ = state.consume(try XCTUnwrap(state.output(for: acute)), in: layout)
+    XCTAssertNil(state.consume(try XCTUnwrap(state.output(for: beta)), in: layout))
+    XCTAssertEqual(state.activeDeadKey, .acute)
+    XCTAssertEqual(state.composedText(for: alpha, in: layout), "ά")
+    XCTAssertNil(state.composedText(for: beta, in: layout))
     XCTAssertEqual(
-      state.consume(try XCTUnwrap(state.output(for: beta)), in: layout),
-      .text("΄β")
+      state.consume(try XCTUnwrap(state.output(for: alpha)), in: layout),
+      .text("ά")
     )
   }
 

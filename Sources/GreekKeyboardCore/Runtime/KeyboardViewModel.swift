@@ -37,6 +37,10 @@ public final class KeyboardViewModel: ObservableObject {
   }
 
   public func displayText(for key: KeyboardKey) -> String {
+    if let composed = state.composedText(for: key, in: layout) {
+      return composed
+    }
+
     guard let output = state.output(for: key) else {
       return modifierDisplayText(for: key)
     }
@@ -82,12 +86,19 @@ public final class KeyboardViewModel: ObservableObject {
     switch key.kind {
     case let .modifier(modifier):
       return modifier == .shift || modifier == .capsLock || modifier == .option
-    case .character, .deadKey, .special:
+    case .character:
+      guard state.activeDeadKey != nil else { return true }
+      return state.composedText(for: key, in: layout) != nil
+    case .deadKey, .special:
       return true
     }
   }
 
   public func copyText(for key: KeyboardKey) -> String? {
+    if let composed = state.composedText(for: key, in: layout) {
+      return composed
+    }
+
     guard let output = state.output(for: key) else { return nil }
     switch output {
     case let .text(text):

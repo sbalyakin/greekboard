@@ -108,37 +108,47 @@ public struct KeyboardState: Sendable {
   }
 
   public mutating func consume(_ output: KeyOutput, in layout: KeyboardLayout) -> KeyOutput? {
-    defer {
-      if modifiers.virtualShift == .once {
-        modifiers.virtualShift = .off
-      }
-      if modifiers.isVirtualOptionEnabled {
-        modifiers.isVirtualOptionEnabled = false
-      }
-    }
-
+    let result: KeyOutput?
     switch output {
     case let .deadKey(deadKey):
       if activeDeadKey == deadKey {
         activeDeadKey = nil
-        return .text(deadKey.spacingCharacter)
+        result = .text(deadKey.spacingCharacter)
+      } else {
+        activeDeadKey = deadKey
+        result = nil
       }
-      activeDeadKey = deadKey
-      return nil
 
     case let .text(text):
       guard let deadKey = activeDeadKey else {
-        return output
+        result = output
+        break
+      }
+      guard let composed = layout.deadKeyMappings[deadKey]?[text] else {
+        // Unmapped key: keep dead-key mode, insert nothing, leave modifiers alone.
+        return nil
       }
       activeDeadKey = nil
-      let composed = layout.deadKeyMappings[deadKey]?[text]
-        ?? deadKey.spacingCharacter + text
-      return .text(composed)
+      result = .text(composed)
 
     case .keyPress:
       activeDeadKey = nil
-      return output
+      result = output
     }
+
+    if modifiers.virtualShift == .once {
+      modifiers.virtualShift = .off
+    }
+    if modifiers.isVirtualOptionEnabled {
+      modifiers.isVirtualOptionEnabled = false
+    }
+    return result
+  }
+
+  public func composedText(for key: KeyboardKey, in layout: KeyboardLayout) -> String? {
+    guard let deadKey = activeDeadKey else { return nil }
+    guard case let .text(text) = output(for: key) else { return nil }
+    return layout.deadKeyMappings[deadKey]?[text]
   }
 
   private func characterOutput(for key: KeyboardKey, isLetter: Bool) -> KeyOutput? {
