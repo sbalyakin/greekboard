@@ -9,6 +9,7 @@ Icon
 
 # Xcode
 build/
+output/
 DerivedData/
 *.pbxuser
 !default.pbxuser
