@@ -50,38 +50,6 @@ public final class KeyboardViewModel: ObservableObject {
     }
   }
 
-  public func alternateText(for key: KeyboardKey) -> String? {
-    let primary = displayText(for: key)
-    let alternateOutput: KeyOutput?
-    switch key.kind {
-    case let .character(isLetter):
-      if isLetter {
-        alternateOutput = state.modifiers.usesUppercaseLetters
-          ? key.baseOutput
-          : key.shiftOutput
-      } else {
-        alternateOutput = state.modifiers.isShiftEnabled
-          ? key.baseOutput
-          : key.shiftOutput
-      }
-    case .deadKey:
-      guard !state.modifiers.isOptionEnabled else { return nil }
-      alternateOutput = state.modifiers.isShiftEnabled
-        ? key.baseOutput
-        : key.shiftOutput
-    case .modifier, .special:
-      return nil
-    }
-    switch alternateOutput {
-    case let .text(text) where text != primary:
-      return text
-    case let .deadKey(deadKey) where deadKey.spacingCharacter != primary:
-      return deadKey.spacingCharacter
-    case .text, .deadKey, .keyPress, nil:
-      return nil
-    }
-  }
-
   public func isPressed(_ key: KeyboardKey) -> Bool {
     guard let keyCode = key.physicalKeyCode else { return false }
     return state.pressedPhysicalKeys.contains(keyCode)

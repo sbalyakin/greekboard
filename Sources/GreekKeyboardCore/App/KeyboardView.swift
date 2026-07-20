@@ -116,14 +116,6 @@ struct KeyboardView: View {
           .minimumScaleFactor(0.55)
           .lineLimit(1)
 
-        if let alternate = viewModel.alternateText(for: key) {
-          Text(alternate)
-            .font(.system(size: 9 * settings.keyLabelScale * scale))
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            .padding(5 * scale)
-        }
-
         if settings.showLatinKeyLabels && !key.latinLabel.isEmpty {
           Text(key.latinLabel.uppercased())
             .font(
