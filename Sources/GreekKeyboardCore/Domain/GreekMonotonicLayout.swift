@@ -18,10 +18,10 @@ public extension KeyboardLayout {
         character("0", 29, "0", "0", "0", ")"),
         character("minus", 27, "-", "Minus", "-", "_"),
         character("equals", 24, "=", "Equals", "=", "+"),
-        special("delete", 51, "delete", "Delete", width: 2, key: .delete)
+        special("delete", 51, "⌫", "Delete", width: 2, key: .delete)
       ]),
       KeyboardRow(id: "top", keys: [
-        special("tab", 48, "tab", "Tab", width: 1.5, key: .tab),
+        special("tab", 48, "⇥", "Tab", width: 1.5, key: .tab),
         character(
           "q",
           12,
@@ -57,7 +57,7 @@ public extension KeyboardLayout {
         letter("l", 37, "L", "Lambda", "λ", "Λ"),
         deadKey("semicolon", 41, ";", "Acute Accent"),
         character("quote", 39, "'", "Apostrophe", "'", "\""),
-        special("return", 36, "return", "Return", width: 2.375, key: .returnKey)
+        special("return", 36, "⏎", "Return", width: 2.375, key: .returnKey)
       ]),
       KeyboardRow(id: "bottom", keys: [
         modifier("leftShift", 56, "shift", "Left Shift", width: 2.25, .shift),
