@@ -29,6 +29,7 @@ struct SettingsView: View {
           "Highlight Physical Key Presses",
           isOn: $settings.highlightPhysicalKeyPresses
         )
+        Toggle("Highlight Key Hover", isOn: $settings.highlightKeyHover)
         Toggle("Enable Click-to-Type", isOn: $settings.enableClickToType)
         slider("Key Label Size", value: $settings.keyLabelScale, range: 0.8...1.35)
       }

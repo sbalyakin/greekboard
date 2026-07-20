@@ -36,7 +36,12 @@ struct KeyboardView: View {
       ForEach(viewModel.layout.rows) { row in
         HStack(spacing: KeyboardLayoutMetrics.horizontalSpacing * scale) {
           ForEach(row.keys) { key in
-            keyView(key, scale: scale)
+            KeyCapView(
+              key: key,
+              scale: scale,
+              viewModel: viewModel,
+              settings: settings
+            )
           }
         }
       }
@@ -93,18 +98,42 @@ struct KeyboardView: View {
     }
   }
 
-  private func keyView(_ key: KeyboardKey, scale: CGFloat) -> some View {
-    let pressed = settings.highlightPhysicalKeyPresses && viewModel.isPressed(key)
+  private func copy(_ text: String) {
+    let pasteboard = NSPasteboard.general
+    pasteboard.clearContents()
+    pasteboard.setString(text, forType: .string)
+  }
+}
+
+private struct KeyCapView: View {
+  let key: KeyboardKey
+  let scale: CGFloat
+  @ObservedObject var viewModel: KeyboardViewModel
+  @ObservedObject var settings: SettingsStore
+  @State private var isHovered = false
+  @State private var isMousePressed = false
+
+  var body: some View {
+    let pressed =
+      isMousePressed
+      || (settings.highlightPhysicalKeyPresses && viewModel.isPressed(key))
     let active = viewModel.isActive(key)
+    let hovered = settings.highlightKeyHover && isHovered
     let isEnabled = viewModel.isEnabled(key)
     let displayText = viewModel.displayText(for: key)
 
-    return Button {
+    Button {
       viewModel.press(key, clickCount: NSApp.currentEvent?.clickCount ?? 1)
     } label: {
       ZStack {
         RoundedRectangle(cornerRadius: settings.keyCornerRadius * scale)
           .fill(keyColor(isPressed: pressed, isActive: active))
+          .overlay {
+            if hovered && !pressed && !active {
+              RoundedRectangle(cornerRadius: settings.keyCornerRadius * scale)
+                .fill(Color(nsColor: .labelColor).opacity(0.1))
+            }
+          }
           .shadow(color: .black.opacity(0.18), radius: scale, y: scale)
 
         Text(displayText)
@@ -132,7 +161,7 @@ struct KeyboardView: View {
       }
       .contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
+    .buttonStyle(KeyCapPressButtonStyle(isPressed: $isMousePressed))
     .disabled(!isEnabled)
     .opacity(isEnabled ? 1 : 0.58)
     .frame(
@@ -140,9 +169,16 @@ struct KeyboardView: View {
       height: KeyboardLayoutMetrics.keyHeight * scale
     )
     .scaleEffect(pressed ? 0.96 : 1)
+    .onHover { hovering in
+      isHovered = hovering
+    }
     .animation(
       animation(isEnabled: settings.keyPressAnimation),
       value: pressed
+    )
+    .animation(
+      animation(isEnabled: settings.keyPressAnimation),
+      value: hovered
     )
     .accessibilityLabel(key.accessibilityLabel)
     .accessibilityValue(active ? "Active" : "")
@@ -176,5 +212,16 @@ struct KeyboardView: View {
     let pasteboard = NSPasteboard.general
     pasteboard.clearContents()
     pasteboard.setString(text, forType: .string)
+  }
+}
+
+private struct KeyCapPressButtonStyle: ButtonStyle {
+  @Binding var isPressed: Bool
+
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .onChange(of: configuration.isPressed) { _, pressed in
+        isPressed = pressed
+      }
   }
 }

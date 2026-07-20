@@ -55,6 +55,9 @@ public final class SettingsStore: ObservableObject {
       defaults.set(highlightPhysicalKeyPresses, forKey: Key.highlightPhysicalKeyPresses)
     }
   }
+  @Published public var highlightKeyHover = true {
+    didSet { defaults.set(highlightKeyHover, forKey: Key.highlightKeyHover) }
+  }
   @Published public var enableClickToType = true {
     didSet { defaults.set(enableClickToType, forKey: Key.enableClickToType) }
   }
@@ -87,6 +90,7 @@ public final class SettingsStore: ObservableObject {
     showLatinKeyLabels = defaults.object(forKey: Key.showLatinKeyLabels) as? Bool ?? true
     highlightPhysicalKeyPresses =
       defaults.object(forKey: Key.highlightPhysicalKeyPresses) as? Bool ?? true
+    highlightKeyHover = defaults.object(forKey: Key.highlightKeyHover) as? Bool ?? true
     enableClickToType = defaults.object(forKey: Key.enableClickToType) as? Bool ?? true
     keyLabelScale = defaults.object(forKey: Key.keyLabelScale) as? Double ?? 1
     appearance = KeyboardAppearance(
@@ -114,6 +118,7 @@ private extension SettingsStore {
     static let hideDockIcon = "settings.hideDockIcon"
     static let showLatinKeyLabels = "settings.showLatinKeyLabels"
     static let highlightPhysicalKeyPresses = "settings.highlightPhysicalKeyPresses"
+    static let highlightKeyHover = "settings.highlightKeyHover"
     static let enableClickToType = "settings.enableClickToType"
     static let keyLabelScale = "settings.keyLabelScale"
     static let appearance = "settings.appearance"
