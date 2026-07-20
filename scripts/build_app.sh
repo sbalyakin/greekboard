@@ -23,5 +23,22 @@ if [ -d "$resource_bundle" ]; then
   ditto "$resource_bundle" "$contents_dir/Resources/GreekKeyboardViewer_GreekKeyboardCore.bundle"
 fi
 
-codesign --force --deep --sign - "$app_dir"
+# Stable identity keeps Accessibility / Input Monitoring across rebuilds.
+# Ad-hoc ("-") changes CDHash every build → TCC treats the app as new.
+if [ -n "${CODESIGN_IDENTITY:-}" ]; then
+  identity=$CODESIGN_IDENTITY
+else
+  identity=$(
+    security find-identity -v -p codesigning 2>/dev/null \
+      | awk -F\" '/Apple Development|Developer ID Application/ { print $2; exit }'
+  )
+fi
+
+if [ -z "${identity:-}" ]; then
+  identity="-"
+  echo "warning: no stable codesign identity; using ad-hoc. Accessibility/Input Monitoring will reset on each rebuild. Set CODESIGN_IDENTITY or install an Apple Development certificate." >&2
+fi
+
+codesign --force --deep --sign "$identity" "$app_dir"
+echo "signed with: $identity"
 echo "$app_dir"

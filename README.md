@@ -12,10 +12,12 @@ active application.
 open "output/Greekboard.app"
 ```
 
-The generated app is ad-hoc signed. Click-to-type requires Accessibility access;
-global physical-key highlighting requires Input Monitoring access. Both are
-requested only from explicit buttons in the app. Viewer mode works without
-either permission.
+The generated app is signed with your Apple Development identity when available
+(override with `CODESIGN_IDENTITY`). That keeps Accessibility and Input Monitoring
+grants across rebuilds. Ad-hoc signing is only a fallback and resets those grants
+every build. Click-to-type requires Accessibility access; global physical-key
+highlighting requires Input Monitoring access. Both are requested only from
+explicit buttons in the app. Viewer mode works without either permission.
 
 ## Test
 
