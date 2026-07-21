@@ -226,8 +226,8 @@ private struct KeyCapView: View {
       isMousePressed
       || (settings.highlightPhysicalKeyPresses && viewModel.isPressed(key))
     let active = viewModel.isActive(key)
-    let hovered = settings.highlightKeyHover && isHovered
     let isEnabled = viewModel.isEnabled(key)
+    let hovered = settings.highlightKeyHover && isHovered && isEnabled
     let displayText = viewModel.displayText(for: key)
 
     Button {
@@ -239,7 +239,7 @@ private struct KeyCapView: View {
           .overlay {
             if hovered && !pressed && !active {
               RoundedRectangle(cornerRadius: settings.keyCornerRadius * scale)
-                .fill(Color(nsColor: .labelColor).opacity(0.1))
+                .fill(Color.accentColor.opacity(0.08))
             }
           }
           .shadow(color: .black.opacity(0.18), radius: scale, y: scale)
@@ -274,7 +274,7 @@ private struct KeyCapView: View {
     .buttonStyle(KeyCapPressButtonStyle(isPressed: $isMousePressed))
     .focusable(false)
     .disabled(!isEnabled)
-    .opacity(isEnabled ? 1 : 0.58)
+    .opacity(isEnabled ? 1 : 0.33)
     .frame(
       width: KeyboardLayoutMetrics.keyWidth * key.width * scale,
       height: KeyboardLayoutMetrics.keyHeight * scale
