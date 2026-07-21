@@ -9,13 +9,13 @@ struct KeyboardView: View {
   private var showsStatusBanner: Bool {
     KeyboardWindowMetrics.showsStatusBanner(
       hasInsertionError: viewModel.insertionErrorMessage != nil,
-      clickToTypeEnabled: settings.enableClickToType,
+      clickTarget: settings.clickTarget,
       isAccessibilityGranted: permissions.isAccessibilityGranted
     )
   }
 
   private var showsLocalInputPanel: Bool {
-    KeyboardWindowMetrics.showsLocalInputPanel(clickToTypeEnabled: settings.enableClickToType)
+    KeyboardWindowMetrics.showsLocalInputPanel(clickTarget: settings.clickTarget)
   }
 
   var body: some View {
@@ -130,7 +130,9 @@ struct KeyboardView: View {
       .font(.system(size: 11 * scale))
       .padding(.horizontal, 8 * scale)
       .frame(height: KeyboardWindowMetrics.statusBannerHeight * scale)
-    } else if settings.enableClickToType && !permissions.isAccessibilityGranted {
+    } else if settings.clickTarget.insertsIntoActiveApplication
+      && !permissions.isAccessibilityGranted
+    {
       HStack(spacing: 8 * scale) {
         Image(systemName: "eye")
         Text("Viewer mode. Allow Accessibility access to type by clicking keys.")

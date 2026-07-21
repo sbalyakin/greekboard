@@ -30,7 +30,12 @@ struct SettingsView: View {
           isOn: $settings.highlightPhysicalKeyPresses
         )
         Toggle("Highlight Key Hover", isOn: $settings.highlightKeyHover)
-        Toggle("Enable Click-to-Type", isOn: $settings.enableClickToType)
+        Picker("Type Into", selection: $settings.clickTarget) {
+          ForEach(ClickTarget.allCases) { target in
+            Text(target.title).tag(target)
+          }
+        }
+        .pickerStyle(.radioGroup)
         slider("Key Label Size", value: $settings.keyLabelScale, range: 0.8...1.35)
       }
 
@@ -51,7 +56,7 @@ struct SettingsView: View {
 
       Section("Permissions") {
         permissionRow(
-          title: "Click-to-Type",
+          title: "Active Application",
           isGranted: permissions.isAccessibilityGranted,
           request: permissions.requestAccessibility,
           openSettings: permissions.openAccessibilitySettings

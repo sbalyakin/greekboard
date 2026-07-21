@@ -1,6 +1,6 @@
 import Foundation
 
-/// Editable draft text used when Click-to-Type is off.
+/// Editable draft text used when Type Into is set to Text Area.
 struct DraftTextBuffer: Equatable {
   var text: String
   /// Selection in UTF-16 units (NSString / NSTextView coordinates).

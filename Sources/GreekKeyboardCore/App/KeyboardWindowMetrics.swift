@@ -80,13 +80,14 @@ enum KeyboardWindowMetrics {
 
   static func showsStatusBanner(
     hasInsertionError: Bool,
-    clickToTypeEnabled: Bool,
+    clickTarget: ClickTarget,
     isAccessibilityGranted: Bool
   ) -> Bool {
-    hasInsertionError || (clickToTypeEnabled && !isAccessibilityGranted)
+    hasInsertionError
+      || (clickTarget.insertsIntoActiveApplication && !isAccessibilityGranted)
   }
 
-  static func showsLocalInputPanel(clickToTypeEnabled: Bool) -> Bool {
-    !clickToTypeEnabled
+  static func showsLocalInputPanel(clickTarget: ClickTarget) -> Bool {
+    clickTarget == .textArea
   }
 }

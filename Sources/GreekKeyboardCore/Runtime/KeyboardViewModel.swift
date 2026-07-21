@@ -156,7 +156,7 @@ public final class KeyboardViewModel: ObservableObject {
   }
 
   private func insert(_ output: KeyOutput) {
-    guard settings.enableClickToType else {
+    guard settings.clickTarget.insertsIntoActiveApplication else {
       var next = draft
       next.apply(output)
       draft = next

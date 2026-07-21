@@ -23,11 +23,11 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
 
     let initialShowsBanner = KeyboardWindowMetrics.showsStatusBanner(
       hasInsertionError: viewModel.insertionErrorMessage != nil,
-      clickToTypeEnabled: settings.enableClickToType,
+      clickTarget: settings.clickTarget,
       isAccessibilityGranted: permissions.isAccessibilityGranted
     )
     let initialShowsLocalInput = KeyboardWindowMetrics.showsLocalInputPanel(
-      clickToTypeEnabled: settings.enableClickToType
+      clickTarget: settings.clickTarget
     )
     let initialContentSize = KeyboardWindowMetrics.contentSize(
       for: 1,
@@ -75,7 +75,7 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
     super.init(window: panel)
     panel.delegate = self
     installSettingsButton(on: panel)
-    observeStatusBanner()
+    observeWindowChrome()
   }
 
   @available(*, unavailable)
@@ -88,8 +88,20 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
   }
 
   func show() {
+    syncWindowChrome(animated: false)
     window?.orderFrontRegardless()
     onVisibilityChanged?(true)
+  }
+
+  func syncWindowChrome(animated: Bool = true) {
+    applyWindowChrome(
+      WindowChromeState.current(
+        viewModel: viewModel,
+        settings: settings,
+        permissions: permissions
+      ),
+      animated: animated
+    )
   }
 
   func hide() {
@@ -148,13 +160,13 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
   private var showsStatusBanner: Bool {
     KeyboardWindowMetrics.showsStatusBanner(
       hasInsertionError: viewModel.insertionErrorMessage != nil,
-      clickToTypeEnabled: settings.enableClickToType,
+      clickTarget: settings.clickTarget,
       isAccessibilityGranted: permissions.isAccessibilityGranted
     )
   }
 
   private var showsLocalInputPanel: Bool {
-    KeyboardWindowMetrics.showsLocalInputPanel(clickToTypeEnabled: settings.enableClickToType)
+    KeyboardWindowMetrics.showsLocalInputPanel(clickTarget: settings.clickTarget)
   }
 
   private func installSettingsButton(on panel: NSPanel) {
@@ -194,41 +206,48 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
     onOpenSettings?()
   }
 
-  private func observeStatusBanner() {
+  private func observeWindowChrome() {
     Publishers.CombineLatest3(
       viewModel.$insertionErrorMessage.map { $0 != nil },
-      settings.$enableClickToType,
+      settings.$clickTarget,
       permissions.$isAccessibilityGranted
     )
     .map(WindowChromeState.init)
     .removeDuplicates()
     .dropFirst()
+    // Defer so Settings radio can finish its own binding update first.
+    .receive(on: DispatchQueue.main)
     .sink { [weak self] chrome in
-      self?.applyWindowChrome(chrome)
+      DispatchQueue.main.async {
+        self?.applyWindowChrome(chrome, animated: false)
+      }
     }
     .store(in: &cancellables)
   }
 
-  private func applyWindowChrome(_ chrome: WindowChromeState) {
+  private func applyWindowChrome(_ chrome: WindowChromeState, animated: Bool) {
     if let panel = window as? KeyboardPanel {
       panel.allowsKeyFocus = chrome.showsLocalInputPanel
     }
-    applyContentSize(animated: true)
+    applyContentSize(
+      showsStatusBanner: chrome.showsStatusBanner,
+      showsLocalInputPanel: chrome.showsLocalInputPanel,
+      animated: animated
+    )
   }
 
-  private func applyContentSize(scale: CGFloat? = nil, animated: Bool) {
+  private func applyContentSize(
+    scale: CGFloat? = nil,
+    showsStatusBanner: Bool? = nil,
+    showsLocalInputPanel: Bool? = nil,
+    animated: Bool
+  ) {
     guard let window else { return }
     let scale = scale ?? currentScale()
-    let showsBanner = showsStatusBanner
-    let showsLocal = showsLocalInputPanel
+    let showsBanner = showsStatusBanner ?? self.showsStatusBanner
+    let showsLocal = showsLocalInputPanel ?? self.showsLocalInputPanel
     let contentSize = KeyboardWindowMetrics.contentSize(
       for: scale,
-      showsStatusBanner: showsBanner,
-      showsLocalInputPanel: showsLocal
-    )
-    window.contentAspectRatio = contentSize
-    window.contentMinSize = KeyboardWindowMetrics.contentSize(
-      for: KeyboardWindowMetrics.minimumScale,
       showsStatusBanner: showsBanner,
       showsLocalInputPanel: showsLocal
     )
@@ -238,7 +257,14 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
     var frame = window.frame
     frame.origin.y += frame.height - frameSize.height
     frame.size = frameSize
+    // Set frame before aspect ratio so AppKit does not stretch width to the old height.
     window.setFrame(frame, display: true, animate: animated)
+    window.contentAspectRatio = contentSize
+    window.contentMinSize = KeyboardWindowMetrics.contentSize(
+      for: KeyboardWindowMetrics.minimumScale,
+      showsStatusBanner: showsBanner,
+      showsLocalInputPanel: showsLocal
+    )
   }
 
   private func currentScale() -> CGFloat {
@@ -278,14 +304,27 @@ private struct WindowChromeState: Equatable {
   let showsStatusBanner: Bool
   let showsLocalInputPanel: Bool
 
-  init(hasInsertionError: Bool, clickToTypeEnabled: Bool, isAccessibilityGranted: Bool) {
+  init(hasInsertionError: Bool, clickTarget: ClickTarget, isAccessibilityGranted: Bool) {
     showsStatusBanner = KeyboardWindowMetrics.showsStatusBanner(
       hasInsertionError: hasInsertionError,
-      clickToTypeEnabled: clickToTypeEnabled,
+      clickTarget: clickTarget,
       isAccessibilityGranted: isAccessibilityGranted
     )
     showsLocalInputPanel = KeyboardWindowMetrics.showsLocalInputPanel(
-      clickToTypeEnabled: clickToTypeEnabled
+      clickTarget: clickTarget
+    )
+  }
+
+  @MainActor
+  static func current(
+    viewModel: KeyboardViewModel,
+    settings: SettingsStore,
+    permissions: MacPermissionAdapter
+  ) -> WindowChromeState {
+    WindowChromeState(
+      hasInsertionError: viewModel.insertionErrorMessage != nil,
+      clickTarget: settings.clickTarget,
+      isAccessibilityGranted: permissions.isAccessibilityGranted
     )
   }
 }

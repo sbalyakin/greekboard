@@ -32,6 +32,27 @@ public enum KeyboardAppearance: String, CaseIterable, Identifiable, Sendable {
   }
 }
 
+/// Where virtual key presses deliver text.
+public enum ClickTarget: String, CaseIterable, Identifiable, Equatable, Hashable, Sendable {
+  case activeApplication
+  case textArea
+
+  public var id: String { rawValue }
+
+  public var title: String {
+    switch self {
+    case .activeApplication:
+      return L10n.text("clickTarget.activeApplication", value: "Active Application")
+    case .textArea:
+      return L10n.text("clickTarget.textArea", value: "Text Area")
+    }
+  }
+
+  public var insertsIntoActiveApplication: Bool {
+    self == .activeApplication
+  }
+}
+
 @MainActor
 public final class SettingsStore: ObservableObject {
   @Published public var launchAtLoginErrorMessage: String?
@@ -58,8 +79,8 @@ public final class SettingsStore: ObservableObject {
   @Published public var highlightKeyHover = true {
     didSet { defaults.set(highlightKeyHover, forKey: Key.highlightKeyHover) }
   }
-  @Published public var enableClickToType = true {
-    didSet { defaults.set(enableClickToType, forKey: Key.enableClickToType) }
+  @Published public var clickTarget = ClickTarget.activeApplication {
+    didSet { defaults.set(clickTarget.rawValue, forKey: Key.clickTarget) }
   }
   @Published public var keyLabelScale = 1.0 {
     didSet { defaults.set(keyLabelScale, forKey: Key.keyLabelScale) }
@@ -91,7 +112,9 @@ public final class SettingsStore: ObservableObject {
     highlightPhysicalKeyPresses =
       defaults.object(forKey: Key.highlightPhysicalKeyPresses) as? Bool ?? true
     highlightKeyHover = defaults.object(forKey: Key.highlightKeyHover) as? Bool ?? true
-    enableClickToType = defaults.object(forKey: Key.enableClickToType) as? Bool ?? true
+    clickTarget =
+      ClickTarget(rawValue: defaults.string(forKey: Key.clickTarget) ?? "")
+      ?? .activeApplication
     keyLabelScale = defaults.object(forKey: Key.keyLabelScale) as? Double ?? 1
     appearance = KeyboardAppearance(
       rawValue: defaults.string(forKey: Key.appearance) ?? "system"
@@ -119,7 +142,7 @@ private extension SettingsStore {
     static let showLatinKeyLabels = "settings.showLatinKeyLabels"
     static let highlightPhysicalKeyPresses = "settings.highlightPhysicalKeyPresses"
     static let highlightKeyHover = "settings.highlightKeyHover"
-    static let enableClickToType = "settings.enableClickToType"
+    static let clickTarget = "settings.clickTarget"
     static let keyLabelScale = "settings.keyLabelScale"
     static let appearance = "settings.appearance"
     static let keyboardScale = "settings.keyboardScale"

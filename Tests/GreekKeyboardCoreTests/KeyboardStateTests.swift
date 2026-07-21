@@ -212,30 +212,30 @@ final class KeyboardStateTests: XCTestCase {
     )
   }
 
-  func testLocalInputPanelShowsWhenClickToTypeDisabled() {
-    XCTAssertTrue(KeyboardWindowMetrics.showsLocalInputPanel(clickToTypeEnabled: false))
-    XCTAssertFalse(KeyboardWindowMetrics.showsLocalInputPanel(clickToTypeEnabled: true))
+  func testLocalInputPanelShowsForTextAreaTarget() {
+    XCTAssertTrue(KeyboardWindowMetrics.showsLocalInputPanel(clickTarget: .textArea))
+    XCTAssertFalse(KeyboardWindowMetrics.showsLocalInputPanel(clickTarget: .activeApplication))
   }
 
   func testStatusBannerVisibilityMatchesPermissionsMessage() {
     XCTAssertTrue(
       KeyboardWindowMetrics.showsStatusBanner(
         hasInsertionError: false,
-        clickToTypeEnabled: true,
+        clickTarget: .activeApplication,
         isAccessibilityGranted: false
       )
     )
     XCTAssertFalse(
       KeyboardWindowMetrics.showsStatusBanner(
         hasInsertionError: false,
-        clickToTypeEnabled: true,
+        clickTarget: .activeApplication,
         isAccessibilityGranted: true
       )
     )
     XCTAssertTrue(
       KeyboardWindowMetrics.showsStatusBanner(
         hasInsertionError: true,
-        clickToTypeEnabled: false,
+        clickTarget: .textArea,
         isAccessibilityGranted: true
       )
     )
