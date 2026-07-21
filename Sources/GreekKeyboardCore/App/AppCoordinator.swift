@@ -14,8 +14,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
   private let statusMenu = NSMenu()
 
   private var cancellables = Set<AnyCancellable>()
-  private var showMenuItem: NSMenuItem?
-  private var hideMenuItem: NSMenuItem?
+  private var visibilityMenuItem: NSMenuItem?
   private var alwaysOnTopMenuItem: NSMenuItem?
   private var latinLabelsMenuItem: NSMenuItem?
 
@@ -79,8 +78,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
 
   func menuWillOpen(_ menu: NSMenu) {
     let isVisible = keyboardWindowController.isVisible
-    showMenuItem?.isEnabled = !isVisible
-    hideMenuItem?.isEnabled = isVisible
+    visibilityMenuItem?.title = isVisible ? "Hide Keyboard" : "Show Keyboard"
     alwaysOnTopMenuItem?.state = settings.alwaysOnTop ? .on : .off
     latinLabelsMenuItem?.state = settings.showLatinKeyLabels ? .on : .off
   }
@@ -121,20 +119,17 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
 
     statusMenu.delegate = self
 
-    let showItem = item("Show Keyboard", action: #selector(showKeyboard))
-    let hideItem = item("Hide Keyboard", action: #selector(hideKeyboard))
+    let visibilityItem = item("Show Keyboard", action: #selector(toggleKeyboard))
     let alwaysOnTopItem = item("Always on Top", action: #selector(toggleAlwaysOnTop))
     let latinLabelsItem = item(
       "Show Latin Key Labels",
       action: #selector(toggleLatinLabels)
     )
-    showMenuItem = showItem
-    hideMenuItem = hideItem
+    visibilityMenuItem = visibilityItem
     alwaysOnTopMenuItem = alwaysOnTopItem
     latinLabelsMenuItem = latinLabelsItem
 
-    statusMenu.addItem(showItem)
-    statusMenu.addItem(hideItem)
+    statusMenu.addItem(visibilityItem)
     statusMenu.addItem(.separator())
     statusMenu.addItem(alwaysOnTopItem)
     statusMenu.addItem(latinLabelsItem)
@@ -238,22 +233,13 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     statusMenu.popUp(positioning: nil, at: location, in: button)
   }
 
+  @objc
   private func toggleKeyboard() {
     if keyboardWindowController.isVisible {
       keyboardWindowController.hide()
     } else {
       keyboardWindowController.show()
     }
-  }
-
-  @objc
-  private func showKeyboard() {
-    keyboardWindowController.show()
-  }
-
-  @objc
-  private func hideKeyboard() {
-    keyboardWindowController.hide()
   }
 
   @objc
