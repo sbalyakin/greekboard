@@ -16,7 +16,6 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
   private var cancellables = Set<AnyCancellable>()
   private var visibilityMenuItem: NSMenuItem?
   private var alwaysOnTopMenuItem: NSMenuItem?
-  private var latinLabelsMenuItem: NSMenuItem?
 
   override init() {
     let settings = SettingsStore()
@@ -80,7 +79,6 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     let isVisible = keyboardWindowController.isVisible
     visibilityMenuItem?.title = isVisible ? "Hide Keyboard" : "Show Keyboard"
     alwaysOnTopMenuItem?.state = settings.alwaysOnTop ? .on : .off
-    latinLabelsMenuItem?.state = settings.showLatinKeyLabels ? .on : .off
   }
 
   private func configureApplication() {
@@ -121,21 +119,13 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
 
     let visibilityItem = item("Show Keyboard", action: #selector(toggleKeyboard))
     let alwaysOnTopItem = item("Always on Top", action: #selector(toggleAlwaysOnTop))
-    let latinLabelsItem = item(
-      "Show Latin Key Labels",
-      action: #selector(toggleLatinLabels)
-    )
     visibilityMenuItem = visibilityItem
     alwaysOnTopMenuItem = alwaysOnTopItem
-    latinLabelsMenuItem = latinLabelsItem
 
     statusMenu.addItem(visibilityItem)
     statusMenu.addItem(.separator())
     statusMenu.addItem(alwaysOnTopItem)
-    statusMenu.addItem(latinLabelsItem)
-    statusMenu.addItem(.separator())
     statusMenu.addItem(item("Settings…", action: #selector(showSettings)))
-    statusMenu.addItem(item("About Greekboard", action: #selector(showAbout)))
     statusMenu.addItem(.separator())
     statusMenu.addItem(item("Quit", action: #selector(quit)))
   }
@@ -248,21 +238,10 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
   }
 
   @objc
-  private func toggleLatinLabels() {
-    settings.showLatinKeyLabels.toggle()
-  }
-
-  @objc
   private func showSettings() {
     permissions.refresh()
     settingsWindowController.setAppearance(settings.appearance)
     settingsWindowController.show()
-  }
-
-  @objc
-  private func showAbout() {
-    NSApp.activate(ignoringOtherApps: true)
-    NSApp.orderFrontStandardAboutPanel(nil)
   }
 
   @objc
