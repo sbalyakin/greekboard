@@ -36,48 +36,49 @@ struct KeyboardView: View {
     .background(.regularMaterial)
   }
 
-  private func localInputPanel(scale: CGFloat) -> some View {
-    HStack(alignment: .top, spacing: KeyboardWindowMetrics.localInputFieldButtonSpacing * scale) {
-      LocalDraftTextView(
-        draft: $viewModel.draft,
-        fontSize: KeyboardLayoutMetrics.keyLabelFontSize
-          * settings.keyLabelScale
-          * scale
-      )
-        .frame(maxWidth: .infinity)
-        .frame(height: KeyboardWindowMetrics.localInputPanelHeight * scale)
+  private var keyCapVisualSettings: KeyCapVisualSettings {
+    KeyCapVisualSettings(
+      showLatinKeyLabels: settings.showLatinKeyLabels,
+      highlightKeyHover: settings.highlightKeyHover,
+      keyLabelScale: settings.keyLabelScale,
+      keyCornerRadius: settings.keyCornerRadius,
+      keyPressAnimation: settings.keyPressAnimation
+    )
+  }
 
-      VStack(spacing: KeyboardLayoutMetrics.verticalSpacing * scale) {
-        DraftActionButton(
-          symbol: "⧉",
-          accessibilityLabel: "Copy",
-          scale: scale,
-          animationEnabled: settings.keyPressAnimation
-        ) {
-          copy(viewModel.draft.text)
-        }
-
-        DraftActionButton(
-          symbol: "×",
-          accessibilityLabel: "Clear",
-          scale: scale,
-          animationEnabled: settings.keyPressAnimation
-        ) {
-          viewModel.clearDraft()
-        }
-      }
-    }
-    .frame(height: KeyboardWindowMetrics.localInputPanelHeight * scale)
+  private func keyCapPresentation(
+    for key: KeyboardKey,
+    scale: CGFloat,
+    visual: KeyCapVisualSettings
+  ) -> KeyCapPresentation {
+    KeyCapPresentation(
+      displayText: viewModel.displayText(for: key),
+      latinLabel: key.latinLabel,
+      isPressed: settings.highlightPhysicalKeyPresses && viewModel.isPressed(key),
+      isActive: viewModel.isActive(key),
+      isEnabled: viewModel.isEnabled(key),
+      visual: visual,
+      scale: scale,
+      accessibilityLabel: key.accessibilityLabel
+    )
   }
 
   private func keyboard(scale: CGFloat) -> some View {
     let keysWidth = KeyboardLayoutMetrics.keysWidth(for: viewModel.layout) * scale
+    let visualSettings = keyCapVisualSettings
 
     return VStack(spacing: 0) {
       if showsLocalInputPanel {
-        localInputPanel(scale: scale)
-          .frame(width: keysWidth)
-          .padding(.bottom, KeyboardWindowMetrics.localInputKeyboardGap * scale)
+        LocalInputPanel(
+          draft: $viewModel.draft,
+          scale: scale,
+          keyLabelScale: settings.keyLabelScale,
+          keyPressAnimation: settings.keyPressAnimation,
+          onCopy: { copy(viewModel.draft.text) },
+          onClear: { viewModel.clearDraft() }
+        )
+        .frame(width: keysWidth)
+        .padding(.bottom, KeyboardWindowMetrics.localInputKeyboardGap * scale)
       }
 
       VStack(spacing: KeyboardLayoutMetrics.verticalSpacing * scale) {
@@ -85,11 +86,11 @@ struct KeyboardView: View {
           HStack(spacing: KeyboardLayoutMetrics.horizontalSpacing * scale) {
             ForEach(row.keys) { key in
               KeyCapView(
+                presentation: keyCapPresentation(for: key, scale: scale, visual: visualSettings),
                 key: key,
-                scale: scale,
-                viewModel: viewModel,
-                settings: settings
+                viewModel: viewModel
               )
+              .equatable()
             }
           }
         }
@@ -156,6 +157,66 @@ struct KeyboardView: View {
   }
 }
 
+private struct KeyCapVisualSettings: Equatable {
+  var showLatinKeyLabels: Bool
+  var highlightKeyHover: Bool
+  var keyLabelScale: Double
+  var keyCornerRadius: Double
+  var keyPressAnimation: Bool
+}
+
+private struct KeyCapPresentation: Equatable {
+  var displayText: String
+  var latinLabel: String
+  var isPressed: Bool
+  var isActive: Bool
+  var isEnabled: Bool
+  var visual: KeyCapVisualSettings
+  var scale: CGFloat
+  var accessibilityLabel: String
+}
+
+private struct LocalInputPanel: View {
+  @Binding var draft: DraftTextBuffer
+  let scale: CGFloat
+  let keyLabelScale: Double
+  let keyPressAnimation: Bool
+  let onCopy: () -> Void
+  let onClear: () -> Void
+
+  var body: some View {
+    HStack(alignment: .top, spacing: KeyboardWindowMetrics.localInputFieldButtonSpacing * scale) {
+      LocalDraftTextView(
+        draft: $draft,
+        fontSize: KeyboardLayoutMetrics.keyLabelFontSize * keyLabelScale * scale
+      )
+      .frame(maxWidth: .infinity)
+      .frame(height: KeyboardWindowMetrics.localInputPanelHeight * scale)
+
+      VStack(spacing: KeyboardLayoutMetrics.verticalSpacing * scale) {
+        DraftActionButton(
+          symbol: "⧉",
+          accessibilityLabel: "Copy",
+          scale: scale,
+          animationEnabled: keyPressAnimation
+        ) {
+          onCopy()
+        }
+
+        DraftActionButton(
+          symbol: "×",
+          accessibilityLabel: "Clear",
+          scale: scale,
+          animationEnabled: keyPressAnimation
+        ) {
+          onClear()
+        }
+      }
+    }
+    .frame(height: KeyboardWindowMetrics.localInputPanelHeight * scale)
+  }
+}
+
 private struct DraftActionButton: View {
   let symbol: String
   let accessibilityLabel: String
@@ -213,86 +274,85 @@ private struct DraftActionButton: View {
   }
 }
 
-private struct KeyCapView: View {
+private struct KeyCapView: View, Equatable {
+  let presentation: KeyCapPresentation
   let key: KeyboardKey
-  let scale: CGFloat
-  @ObservedObject var viewModel: KeyboardViewModel
-  @ObservedObject var settings: SettingsStore
+  let viewModel: KeyboardViewModel
   @State private var isHovered = false
   @State private var isMousePressed = false
 
+  static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.presentation == rhs.presentation && lhs.key.id == rhs.key.id
+  }
+
   var body: some View {
-    let pressed =
-      isMousePressed
-      || (settings.highlightPhysicalKeyPresses && viewModel.isPressed(key))
-    let active = viewModel.isActive(key)
-    let isEnabled = viewModel.isEnabled(key)
-    let hovered = settings.highlightKeyHover && isHovered && isEnabled
-    let displayText = viewModel.displayText(for: key)
+    let pressed = isMousePressed || presentation.isPressed
+    let hovered =
+      presentation.visual.highlightKeyHover && isHovered && presentation.isEnabled
 
     Button {
       viewModel.press(key, clickCount: NSApp.currentEvent?.clickCount ?? 1)
     } label: {
       ZStack {
-        RoundedRectangle(cornerRadius: settings.keyCornerRadius * scale)
-          .fill(keyColor(isPressed: pressed, isActive: active))
+        RoundedRectangle(cornerRadius: presentation.visual.keyCornerRadius * presentation.scale)
+          .fill(keyColor(isPressed: pressed, isActive: presentation.isActive))
           .overlay {
-            if hovered && !pressed && !active {
-              RoundedRectangle(cornerRadius: settings.keyCornerRadius * scale)
+            if hovered && !pressed && !presentation.isActive {
+              RoundedRectangle(cornerRadius: presentation.visual.keyCornerRadius * presentation.scale)
                 .fill(Color.accentColor.opacity(0.08))
             }
           }
-          .shadow(color: .black.opacity(0.18), radius: scale, y: scale)
+          .shadow(color: .black.opacity(0.18), radius: presentation.scale, y: presentation.scale)
 
-        Text(displayText)
+        Text(presentation.displayText)
           .font(
             .system(
               size: KeyboardLayoutMetrics.keyLabelFontSize
-                * settings.keyLabelScale
-                * scale,
+                * presentation.visual.keyLabelScale
+                * presentation.scale,
               weight: .medium
             )
           )
           .minimumScaleFactor(0.55)
           .lineLimit(1)
 
-        if settings.showLatinKeyLabels && !key.latinLabel.isEmpty {
-          Text(key.latinLabel.uppercased())
+        if presentation.visual.showLatinKeyLabels && !presentation.latinLabel.isEmpty {
+          Text(presentation.latinLabel.uppercased())
             .font(
               .system(
-                size: 8 * settings.keyLabelScale * scale,
+                size: 8 * presentation.visual.keyLabelScale * presentation.scale,
                 weight: .regular
               )
             )
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(5 * scale)
+            .padding(5 * presentation.scale)
         }
       }
       .contentShape(Rectangle())
     }
     .buttonStyle(KeyCapPressButtonStyle(isPressed: $isMousePressed))
     .focusable(false)
-    .disabled(!isEnabled)
-    .opacity(isEnabled ? 1 : 0.33)
+    .disabled(!presentation.isEnabled)
+    .opacity(presentation.isEnabled ? 1 : 0.33)
     .frame(
-      width: KeyboardLayoutMetrics.keyWidth * key.width * scale,
-      height: KeyboardLayoutMetrics.keyHeight * scale
+      width: KeyboardLayoutMetrics.keyWidth * key.width * presentation.scale,
+      height: KeyboardLayoutMetrics.keyHeight * presentation.scale
     )
     .scaleEffect(pressed ? 0.96 : 1)
     .onHover { hovering in
       isHovered = hovering
     }
     .animation(
-      animation(isEnabled: settings.keyPressAnimation),
+      animation(isEnabled: presentation.visual.keyPressAnimation),
       value: pressed
     )
     .animation(
-      animation(isEnabled: settings.keyPressAnimation),
+      animation(isEnabled: presentation.visual.keyPressAnimation),
       value: hovered
     )
-    .accessibilityLabel(key.accessibilityLabel)
-    .accessibilityValue(active ? "Active" : "")
+    .accessibilityLabel(presentation.accessibilityLabel)
+    .accessibilityValue(presentation.isActive ? "Active" : "")
     .contextMenu {
       if let text = viewModel.copyText(for: key) {
         Button("Copy Character") {
