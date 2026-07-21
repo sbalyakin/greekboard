@@ -14,11 +14,16 @@ struct KeyboardView: View {
     )
   }
 
+  private var showsLocalInputPanel: Bool {
+    KeyboardWindowMetrics.showsLocalInputPanel(clickToTypeEnabled: settings.enableClickToType)
+  }
+
   var body: some View {
     GeometryReader { proxy in
       let scale = KeyboardWindowMetrics.scale(
         to: proxy.size,
-        showsStatusBanner: showsStatusBanner
+        showsStatusBanner: showsStatusBanner,
+        showsLocalInputPanel: showsLocalInputPanel
       )
       VStack(spacing: 0) {
         keyboard(scale: scale)
@@ -31,17 +36,61 @@ struct KeyboardView: View {
     .background(.regularMaterial)
   }
 
+  private func localInputPanel(scale: CGFloat) -> some View {
+    HStack(alignment: .top, spacing: KeyboardWindowMetrics.localInputFieldButtonSpacing * scale) {
+      LocalDraftTextView(
+        draft: $viewModel.draft,
+        fontSize: KeyboardLayoutMetrics.keyLabelFontSize
+          * settings.keyLabelScale
+          * scale
+      )
+        .frame(maxWidth: .infinity)
+        .frame(height: KeyboardWindowMetrics.localInputPanelHeight * scale)
+
+      VStack(spacing: KeyboardLayoutMetrics.verticalSpacing * scale) {
+        DraftActionButton(
+          symbol: "⧉",
+          accessibilityLabel: "Copy",
+          scale: scale,
+          animationEnabled: settings.keyPressAnimation
+        ) {
+          copy(viewModel.draft.text)
+        }
+
+        DraftActionButton(
+          symbol: "×",
+          accessibilityLabel: "Clear",
+          scale: scale,
+          animationEnabled: settings.keyPressAnimation
+        ) {
+          viewModel.clearDraft()
+        }
+      }
+    }
+    .frame(height: KeyboardWindowMetrics.localInputPanelHeight * scale)
+  }
+
   private func keyboard(scale: CGFloat) -> some View {
-    VStack(spacing: KeyboardLayoutMetrics.verticalSpacing * scale) {
-      ForEach(viewModel.layout.rows) { row in
-        HStack(spacing: KeyboardLayoutMetrics.horizontalSpacing * scale) {
-          ForEach(row.keys) { key in
-            KeyCapView(
-              key: key,
-              scale: scale,
-              viewModel: viewModel,
-              settings: settings
-            )
+    let keysWidth = KeyboardLayoutMetrics.keysWidth(for: viewModel.layout) * scale
+
+    return VStack(spacing: 0) {
+      if showsLocalInputPanel {
+        localInputPanel(scale: scale)
+          .frame(width: keysWidth)
+          .padding(.bottom, KeyboardWindowMetrics.localInputKeyboardGap * scale)
+      }
+
+      VStack(spacing: KeyboardLayoutMetrics.verticalSpacing * scale) {
+        ForEach(viewModel.layout.rows) { row in
+          HStack(spacing: KeyboardLayoutMetrics.horizontalSpacing * scale) {
+            ForEach(row.keys) { key in
+              KeyCapView(
+                key: key,
+                scale: scale,
+                viewModel: viewModel,
+                settings: settings
+              )
+            }
           }
         }
       }
@@ -105,6 +154,63 @@ struct KeyboardView: View {
   }
 }
 
+private struct DraftActionButton: View {
+  let symbol: String
+  let accessibilityLabel: String
+  let scale: CGFloat
+  let animationEnabled: Bool
+  let action: () -> Void
+
+  @Environment(\.colorScheme) private var colorScheme
+  @State private var isHovered = false
+  @State private var isPressed = false
+
+  var body: some View {
+    Button(action: action) {
+      ZStack {
+        RoundedRectangle(cornerRadius: 8 * scale)
+          .fill(backgroundColor)
+          .opacity(isHovered ? 1 : 0)
+          .overlay {
+            RoundedRectangle(cornerRadius: 8 * scale)
+              .fill(
+                Color(nsColor: .labelColor)
+                  .opacity(isPressed ? 0.12 : 0.05)
+              )
+              .opacity(isHovered ? 1 : 0)
+          }
+
+        Text(symbol)
+          .font(.system(size: 18 * scale, weight: .regular))
+      }
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(KeyCapPressButtonStyle(isPressed: $isPressed))
+    .focusable(false)
+    .frame(
+      width: KeyboardWindowMetrics.localInputButtonHeight * scale,
+      height: KeyboardWindowMetrics.localInputButtonHeight * scale
+    )
+    .onHover { hovering in
+      isHovered = hovering
+    }
+    .animation(animation, value: isPressed)
+    .animation(animation, value: isHovered)
+    .accessibilityLabel(accessibilityLabel)
+  }
+
+  private var animation: Animation? {
+    guard animationEnabled, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+      return nil
+    }
+    return .easeOut(duration: 0.08)
+  }
+
+  private var backgroundColor: Color {
+    Color(nsColor: NSColor(hex: colorScheme == .dark ? "#3A3C3D" : "#E3E3E3"))
+  }
+}
+
 private struct KeyCapView: View {
   let key: KeyboardKey
   let scale: CGFloat
@@ -139,7 +245,9 @@ private struct KeyCapView: View {
         Text(displayText)
           .font(
             .system(
-              size: 20 * settings.keyLabelScale * scale,
+              size: KeyboardLayoutMetrics.keyLabelFontSize
+                * settings.keyLabelScale
+                * scale,
               weight: .medium
             )
           )
@@ -162,6 +270,7 @@ private struct KeyCapView: View {
       .contentShape(Rectangle())
     }
     .buttonStyle(KeyCapPressButtonStyle(isPressed: $isMousePressed))
+    .focusable(false)
     .disabled(!isEnabled)
     .opacity(isEnabled ? 1 : 0.58)
     .frame(

@@ -202,6 +202,21 @@ final class KeyboardStateTests: XCTestCase {
     )
   }
 
+  func testKeyboardWindowContentSizeGrowsForLocalInputPanel() {
+    let withoutPanel = KeyboardWindowMetrics.contentSize(for: 1, showsLocalInputPanel: false)
+    let withPanel = KeyboardWindowMetrics.contentSize(for: 1, showsLocalInputPanel: true)
+    XCTAssertEqual(withoutPanel.width, withPanel.width)
+    XCTAssertEqual(
+      withPanel.height,
+      withoutPanel.height + KeyboardWindowMetrics.localInputChromeHeight
+    )
+  }
+
+  func testLocalInputPanelShowsWhenClickToTypeDisabled() {
+    XCTAssertTrue(KeyboardWindowMetrics.showsLocalInputPanel(clickToTypeEnabled: false))
+    XCTAssertFalse(KeyboardWindowMetrics.showsLocalInputPanel(clickToTypeEnabled: true))
+  }
+
   func testStatusBannerVisibilityMatchesPermissionsMessage() {
     XCTAssertTrue(
       KeyboardWindowMetrics.showsStatusBanner(

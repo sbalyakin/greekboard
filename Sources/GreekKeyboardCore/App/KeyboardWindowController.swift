@@ -26,9 +26,13 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
       clickToTypeEnabled: settings.enableClickToType,
       isAccessibilityGranted: permissions.isAccessibilityGranted
     )
+    let initialShowsLocalInput = KeyboardWindowMetrics.showsLocalInputPanel(
+      clickToTypeEnabled: settings.enableClickToType
+    )
     let initialContentSize = KeyboardWindowMetrics.contentSize(
       for: 1,
-      showsStatusBanner: initialShowsBanner
+      showsStatusBanner: initialShowsBanner,
+      showsLocalInputPanel: initialShowsLocalInput
     )
 
     let panel = KeyboardPanel(
@@ -44,14 +48,20 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
     panel.hidesOnDeactivate = false
     panel.isReleasedWhenClosed = false
     panel.becomesKeyOnlyIfNeeded = true
+    panel.allowsKeyFocus = initialShowsLocalInput
     panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
     panel.contentAspectRatio = initialContentSize
     panel.contentMinSize = KeyboardWindowMetrics.contentSize(
       for: KeyboardWindowMetrics.minimumScale,
-      showsStatusBanner: initialShowsBanner
+      showsStatusBanner: initialShowsBanner,
+      showsLocalInputPanel: initialShowsLocalInput
     )
     panel.setFrameAutosaveName("GreekKeyboardPanelFrame")
-    Self.normalizeContentAspectRatio(of: panel, showsStatusBanner: initialShowsBanner)
+    Self.normalizeContentAspectRatio(
+      of: panel,
+      showsStatusBanner: initialShowsBanner,
+      showsLocalInputPanel: initialShowsLocalInput
+    )
 
     let rootView = KeyboardView(
       viewModel: viewModel,
@@ -124,7 +134,8 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
         origin: .zero,
         size: KeyboardWindowMetrics.contentSize(
           for: KeyboardWindowMetrics.minimumScale,
-          showsStatusBanner: showsStatusBanner
+          showsStatusBanner: showsStatusBanner,
+          showsLocalInputPanel: showsLocalInputPanel
         )
       )
     ).size
@@ -140,6 +151,10 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
       clickToTypeEnabled: settings.enableClickToType,
       isAccessibilityGranted: permissions.isAccessibilityGranted
     )
+  }
+
+  private var showsLocalInputPanel: Bool {
+    KeyboardWindowMetrics.showsLocalInputPanel(clickToTypeEnabled: settings.enableClickToType)
   }
 
   private func installSettingsButton(on panel: NSPanel) {
@@ -185,33 +200,37 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
       settings.$enableClickToType,
       permissions.$isAccessibilityGranted
     )
-    .map { hasError, clickToType, granted in
-      KeyboardWindowMetrics.showsStatusBanner(
-        hasInsertionError: hasError,
-        clickToTypeEnabled: clickToType,
-        isAccessibilityGranted: granted
-      )
-    }
+    .map(WindowChromeState.init)
     .removeDuplicates()
     .dropFirst()
-    .sink { [weak self] _ in
-      self?.applyContentSize(animated: true)
+    .sink { [weak self] chrome in
+      self?.applyWindowChrome(chrome)
     }
     .store(in: &cancellables)
+  }
+
+  private func applyWindowChrome(_ chrome: WindowChromeState) {
+    if let panel = window as? KeyboardPanel {
+      panel.allowsKeyFocus = chrome.showsLocalInputPanel
+    }
+    applyContentSize(animated: true)
   }
 
   private func applyContentSize(scale: CGFloat? = nil, animated: Bool) {
     guard let window else { return }
     let scale = scale ?? currentScale()
     let showsBanner = showsStatusBanner
+    let showsLocal = showsLocalInputPanel
     let contentSize = KeyboardWindowMetrics.contentSize(
       for: scale,
-      showsStatusBanner: showsBanner
+      showsStatusBanner: showsBanner,
+      showsLocalInputPanel: showsLocal
     )
     window.contentAspectRatio = contentSize
     window.contentMinSize = KeyboardWindowMetrics.contentSize(
       for: KeyboardWindowMetrics.minimumScale,
-      showsStatusBanner: showsBanner
+      showsStatusBanner: showsBanner,
+      showsLocalInputPanel: showsLocal
     )
     let frameSize = window.frameRect(
       forContentRect: NSRect(origin: .zero, size: contentSize)
@@ -232,7 +251,8 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
 
   private static func normalizeContentAspectRatio(
     of window: NSWindow,
-    showsStatusBanner: Bool
+    showsStatusBanner: Bool,
+    showsLocalInputPanel: Bool
   ) {
     let contentSize = window.contentRect(forFrameRect: window.frame).size
     let scale = max(
@@ -241,7 +261,8 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
     )
     let normalizedContentSize = KeyboardWindowMetrics.contentSize(
       for: scale,
-      showsStatusBanner: showsStatusBanner
+      showsStatusBanner: showsStatusBanner,
+      showsLocalInputPanel: showsLocalInputPanel
     )
     let normalizedFrameSize = window.frameRect(
       forContentRect: NSRect(origin: .zero, size: normalizedContentSize)
@@ -253,9 +274,32 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
   }
 }
 
+private struct WindowChromeState: Equatable {
+  let showsStatusBanner: Bool
+  let showsLocalInputPanel: Bool
+
+  init(hasInsertionError: Bool, clickToTypeEnabled: Bool, isAccessibilityGranted: Bool) {
+    showsStatusBanner = KeyboardWindowMetrics.showsStatusBanner(
+      hasInsertionError: hasInsertionError,
+      clickToTypeEnabled: clickToTypeEnabled,
+      isAccessibilityGranted: isAccessibilityGranted
+    )
+    showsLocalInputPanel = KeyboardWindowMetrics.showsLocalInputPanel(
+      clickToTypeEnabled: clickToTypeEnabled
+    )
+  }
+}
+
 private final class KeyboardPanel: NSPanel {
-  override var canBecomeKey: Bool { false }
+  var allowsKeyFocus = false
+
+  override var canBecomeKey: Bool { allowsKeyFocus }
   override var canBecomeMain: Bool { false }
+
+  /// NSPanel closes on Escape by default; keep the keyboard visible and only resign focus.
+  override func cancelOperation(_ sender: Any?) {
+    makeFirstResponder(nil)
+  }
 }
 
 private final class HoverHighlightButton: NSButton {

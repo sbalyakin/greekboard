@@ -6,6 +6,7 @@ public final class KeyboardViewModel: ObservableObject {
   @Published public private(set) var state = KeyboardState()
   @Published public private(set) var insertionErrorMessage: String?
   @Published public private(set) var lastFailedText: String?
+  @Published var draft = DraftTextBuffer()
 
   public let layout: KeyboardLayout
 
@@ -23,6 +24,10 @@ public final class KeyboardViewModel: ObservableObject {
     self.settings = settings
     self.insertionService = insertionService
     self.applicationTracker = applicationTracker
+  }
+
+  public func clearDraft() {
+    draft = DraftTextBuffer()
   }
 
   public func press(_ key: KeyboardKey, clickCount: Int = 1) {
@@ -151,7 +156,12 @@ public final class KeyboardViewModel: ObservableObject {
   }
 
   private func insert(_ output: KeyOutput) {
-    guard settings.enableClickToType else { return }
+    guard settings.enableClickToType else {
+      var next = draft
+      next.apply(output)
+      draft = next
+      return
+    }
     guard let processIdentifier = applicationTracker.targetProcessIdentifier else {
       insertionErrorMessage = L10n.text(
         "insertion.noTarget",
