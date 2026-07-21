@@ -11,6 +11,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
   private let keyboardWindowController: KeyboardWindowController
   private let settingsWindowController: SettingsWindowController
   private let statusItem: NSStatusItem
+  private let statusMenu = NSMenu()
 
   private var cancellables = Set<AnyCancellable>()
   private var showMenuItem: NSMenuItem?
@@ -113,10 +114,12 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
       button.setAccessibilityLabel(
         L10n.text("app.name", value: "Greekboard")
       )
+      button.target = self
+      button.action = #selector(statusItemClicked(_:))
+      button.sendAction(on: [.leftMouseUp, .rightMouseUp])
     }
 
-    let menu = NSMenu()
-    menu.delegate = self
+    statusMenu.delegate = self
 
     let showItem = item("Show Keyboard", action: #selector(showKeyboard))
     let hideItem = item("Hide Keyboard", action: #selector(hideKeyboard))
@@ -130,17 +133,16 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     alwaysOnTopMenuItem = alwaysOnTopItem
     latinLabelsMenuItem = latinLabelsItem
 
-    menu.addItem(showItem)
-    menu.addItem(hideItem)
-    menu.addItem(.separator())
-    menu.addItem(alwaysOnTopItem)
-    menu.addItem(latinLabelsItem)
-    menu.addItem(.separator())
-    menu.addItem(item("Settings…", action: #selector(showSettings)))
-    menu.addItem(item("About Greekboard", action: #selector(showAbout)))
-    menu.addItem(.separator())
-    menu.addItem(item("Quit", action: #selector(quit)))
-    statusItem.menu = menu
+    statusMenu.addItem(showItem)
+    statusMenu.addItem(hideItem)
+    statusMenu.addItem(.separator())
+    statusMenu.addItem(alwaysOnTopItem)
+    statusMenu.addItem(latinLabelsItem)
+    statusMenu.addItem(.separator())
+    statusMenu.addItem(item("Settings…", action: #selector(showSettings)))
+    statusMenu.addItem(item("About Greekboard", action: #selector(showAbout)))
+    statusMenu.addItem(.separator())
+    statusMenu.addItem(item("Quit", action: #selector(quit)))
   }
 
   private func observeSettings() {
@@ -214,6 +216,34 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     let menuItem = NSMenuItem(title: title, action: action, keyEquivalent: "")
     menuItem.target = self
     return menuItem
+  }
+
+  @objc
+  private func statusItemClicked(_ sender: Any?) {
+    guard let event = NSApp.currentEvent else { return }
+
+    let isRightClick =
+      event.type == .rightMouseUp || event.modifierFlags.contains(.control)
+    if isRightClick {
+      showStatusMenu()
+      return
+    }
+
+    toggleKeyboard()
+  }
+
+  private func showStatusMenu() {
+    guard let button = statusItem.button else { return }
+    let location = NSPoint(x: 0, y: button.bounds.maxY + 2)
+    statusMenu.popUp(positioning: nil, at: location, in: button)
+  }
+
+  private func toggleKeyboard() {
+    if keyboardWindowController.isVisible {
+      keyboardWindowController.hide()
+    } else {
+      keyboardWindowController.show()
+    }
   }
 
   @objc
