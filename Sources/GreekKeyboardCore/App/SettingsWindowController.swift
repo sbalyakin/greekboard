@@ -19,7 +19,7 @@ final class SettingsWindowController: NSWindowController {
       backing: .buffered,
       defer: false
     )
-    window.title = "Settings"
+    window.title = "Greekboard Settings"
     window.isReleasedWhenClosed = false
     window.contentViewController = NSHostingController(rootView: view)
     window.center()
