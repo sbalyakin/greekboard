@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "scripts: build_app.sh",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/build_app.sh",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rebuild and Relaunch",
+      "type": "swift",
+      "detail": "scripts/rebuild_and_relaunch.sh",
+      "args": ["${workspaceFolder}/scripts/RebuildAndRelaunch.swift"],
+      "cwd": "${workspaceFolder:greekboard}",
+      "env": {
+        "DEVELOPER_DIR": "/Applications/Xcode-26.5.0.app/Contents/Developer",
+        "GREEKBOARD_XCODE_DEVELOPER_DIR": "/Applications/Xcode-26.5.0.app/Contents/Developer"
+      },
+      "disableTaskQueue": true,
+      "dontTriggerTestDiscovery": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "scripts: rebuild_and_relaunch.sh",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/rebuild_and_relaunch.sh",
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "scripts: run_tests.sh",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/run_tests.sh",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

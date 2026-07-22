@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    
+    {
+      "type": "swift",
+      "request": "launch",
+      "name": "Debug Greekboard.app",
+      "program": "${workspaceFolder}/output/Greekboard.app/Contents/MacOS/GreekboardViewer",
+      "cwd": "${workspaceFolder:greekboard}",
+      "args": [],
+      "preLaunchTask": "scripts: build_app.sh"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "name": "Debug GreekboardViewer",
+      "target": "GreekboardViewer",
+      "configuration": "debug",
+      "cwd": "${workspaceFolder:greekboard}",
+      "args": [],
+      "preLaunchTask": "swift: Build Debug GreekboardViewer"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "name": "Release GreekboardViewer",
+      "target": "GreekboardViewer",
+      "configuration": "release",
+      "cwd": "${workspaceFolder:greekboard}",
+      "args": [],
+      "preLaunchTask": "swift: Build Release GreekboardViewer"
+    }
+  ]
+}
