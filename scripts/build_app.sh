@@ -35,7 +35,7 @@ bin_dir=$("$swift_executable" build --disable-sandbox -c release --show-bin-path
 rm -rf "$app_dir"
 mkdir -p "$contents_dir/MacOS" "$contents_dir/Resources"
 ditto "$bin_dir/GreekboardViewer" "$contents_dir/MacOS/GreekboardViewer"
-ditto "$root_dir/Packaging/Info.plist" "$contents_dir/Info.plist"
+ditto "$root_dir/packaging/Info.plist" "$contents_dir/Info.plist"
 
 resource_bundle="$bin_dir/GreekboardViewer_GreekboardCore.bundle"
 if [ -d "$resource_bundle" ]; then
