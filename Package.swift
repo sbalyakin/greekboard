@@ -25,7 +25,8 @@ let package = Package(
     ),
     .testTarget(
       name: "GreekboardCoreTests",
-      dependencies: ["GreekboardCore"]
+      dependencies: ["GreekboardCore"],
+      path: "tests/GreekboardCoreTests"
     )
   ],
   swiftLanguageVersions: [.v5]
