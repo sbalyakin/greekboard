@@ -51,41 +51,13 @@ public final class MacTextInsertionAdapter: TextInsertionServiceProtocol {
 
     switch request {
     case let .text(text):
-      if insertUsingAccessibility(text, into: processIdentifier) {
-        return
-      }
-      try postUnicode(text, into: processIdentifier)
+      try postUnicode(text)
     case let .keyPress(keyCode):
-      try postKey(keyCode, into: processIdentifier)
+      try postKey(keyCode)
     }
   }
 
-  private func insertUsingAccessibility(_ text: String, into processIdentifier: pid_t) -> Bool {
-    let application = AXUIElementCreateApplication(processIdentifier)
-    var focusedValue: CFTypeRef?
-    let copyResult = AXUIElementCopyAttributeValue(
-      application,
-      kAXFocusedUIElementAttribute as CFString,
-      &focusedValue
-    )
-    guard
-      copyResult == .success,
-      let focusedValue,
-      CFGetTypeID(focusedValue) == AXUIElementGetTypeID()
-    else {
-      return false
-    }
-    // The Core Foundation type ID check above proves this cast invariant.
-    let focusedElement = focusedValue as! AXUIElement
-    let setResult = AXUIElementSetAttributeValue(
-      focusedElement,
-      kAXSelectedTextAttribute as CFString,
-      text as CFTypeRef
-    )
-    return setResult == .success
-  }
-
-  private func postUnicode(_ text: String, into processIdentifier: pid_t) throws {
+  private func postUnicode(_ text: String) throws {
     guard
       let keyDown = CGEvent(
         keyboardEventSource: nil,
@@ -113,13 +85,11 @@ public final class MacTextInsertionAdapter: TextInsertionServiceProtocol {
         unicodeString: address
       )
     }
-    keyDown.postToPid(processIdentifier)
-    keyUp.postToPid(processIdentifier)
+    postKeyboardEvents(keyDown, keyUp)
   }
 
   private func postKey(
-    _ keyCode: PhysicalKeyCode,
-    into processIdentifier: pid_t
+    _ keyCode: PhysicalKeyCode
   ) throws {
     guard
       let keyDown = CGEvent(
@@ -135,7 +105,11 @@ public final class MacTextInsertionAdapter: TextInsertionServiceProtocol {
     else {
       throw TextInsertionError.eventCreationFailed
     }
-    keyDown.postToPid(processIdentifier)
-    keyUp.postToPid(processIdentifier)
+    postKeyboardEvents(keyDown, keyUp)
+  }
+
+  private func postKeyboardEvents(_ keyDown: CGEvent, _ keyUp: CGEvent) {
+    keyDown.post(tap: .cghidEventTap)
+    keyUp.post(tap: .cghidEventTap)
   }
 }
