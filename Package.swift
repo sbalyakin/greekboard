@@ -15,11 +15,13 @@ let package = Package(
   targets: [
     .target(
       name: "GreekboardCore",
+      path: "src/GreekboardCore",
       resources: [.process("Resources")]
     ),
     .executableTarget(
       name: "GreekboardViewer",
-      dependencies: ["GreekboardCore"]
+      dependencies: ["GreekboardCore"],
+      path: "src/GreekboardViewer"
     ),
     .testTarget(
       name: "GreekboardCoreTests",
