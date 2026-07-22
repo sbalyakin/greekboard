@@ -3,27 +3,27 @@
 import PackageDescription
 
 let package = Package(
-  name: "GreekKeyboardViewer",
+  name: "GreekboardViewer",
   defaultLocalization: "en",
   platforms: [
     .macOS(.v14)
   ],
   products: [
-    .library(name: "GreekKeyboardCore", targets: ["GreekKeyboardCore"]),
-    .executable(name: "GreekKeyboardViewer", targets: ["GreekKeyboardViewer"])
+    .library(name: "GreekboardCore", targets: ["GreekboardCore"]),
+    .executable(name: "GreekboardViewer", targets: ["GreekboardViewer"])
   ],
   targets: [
     .target(
-      name: "GreekKeyboardCore",
+      name: "GreekboardCore",
       resources: [.process("Resources")]
     ),
     .executableTarget(
-      name: "GreekKeyboardViewer",
-      dependencies: ["GreekKeyboardCore"]
+      name: "GreekboardViewer",
+      dependencies: ["GreekboardCore"]
     ),
     .testTarget(
-      name: "GreekKeyboardCoreTests",
-      dependencies: ["GreekKeyboardCore"]
+      name: "GreekboardCoreTests",
+      dependencies: ["GreekboardCore"]
     )
   ],
   swiftLanguageVersions: [.v5]

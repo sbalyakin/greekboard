@@ -56,7 +56,7 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
       showsStatusBanner: initialShowsBanner,
       showsLocalInputPanel: initialShowsLocalInput
     )
-    panel.setFrameAutosaveName("GreekKeyboardPanelFrame")
+    panel.setFrameAutosaveName("GreekboardPanelFrame")
     Self.normalizeContentAspectRatio(
       of: panel,
       showsStatusBanner: initialShowsBanner,

@@ -42,7 +42,7 @@ Choose the narrowest meaningful scope based on the changed subsystem.
 - `infra`: Cross-subsystem stores, persistence, and infrastructure helpers.
 - `platform`: Concrete macOS adapters not covered by a specific subsystem.
 - `runtime`: Cross-subsystem runtime behavior, container wiring, or event processing.
-- `core`: Comparable changes across multiple GreekKeyboardCore architectural layers with no dominant subsystem.
+- `core`: Comparable changes across multiple GreekboardCore architectural layers with no dominant subsystem.
 
 ### 3. Repository and infrastructure
 - `tests`: Test-only changes, fixtures, and test launchers.

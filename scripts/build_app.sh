@@ -21,7 +21,7 @@ cd "$root_dir"
 "$swift_executable" build \
   --disable-sandbox \
   -c release \
-  --product GreekKeyboardViewer \
+  --product GreekboardViewer \
   -Xswiftc -Xlinker \
   -Xswiftc -platform_version \
   -Xswiftc -Xlinker \
@@ -34,12 +34,12 @@ bin_dir=$("$swift_executable" build --disable-sandbox -c release --show-bin-path
 
 rm -rf "$app_dir"
 mkdir -p "$contents_dir/MacOS" "$contents_dir/Resources"
-ditto "$bin_dir/GreekKeyboardViewer" "$contents_dir/MacOS/GreekKeyboardViewer"
+ditto "$bin_dir/GreekboardViewer" "$contents_dir/MacOS/GreekboardViewer"
 ditto "$root_dir/Packaging/Info.plist" "$contents_dir/Info.plist"
 
-resource_bundle="$bin_dir/GreekKeyboardViewer_GreekKeyboardCore.bundle"
+resource_bundle="$bin_dir/GreekboardViewer_GreekboardCore.bundle"
 if [ -d "$resource_bundle" ]; then
-  ditto "$resource_bundle" "$contents_dir/Resources/GreekKeyboardViewer_GreekKeyboardCore.bundle"
+  ditto "$resource_bundle" "$contents_dir/Resources/GreekboardViewer_GreekboardCore.bundle"
 fi
 
 # Stable identity keeps Accessibility / Input Monitoring across rebuilds.

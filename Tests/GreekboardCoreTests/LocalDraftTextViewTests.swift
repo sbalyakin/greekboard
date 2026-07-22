@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import XCTest
-@testable import GreekKeyboardCore
+@testable import GreekboardCore
 
 final class LocalDraftTextViewTests: XCTestCase {
   func testExternalEditIsUndoneBeforeEarlierTextViewEdit() throws {

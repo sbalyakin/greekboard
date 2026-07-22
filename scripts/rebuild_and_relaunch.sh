@@ -10,7 +10,7 @@ c_green=$'\033[0;32m'
 
 # Stop Greekboard if running
 print "${c_blue}Killing the running Greekboard application...${c_reset}"
-killall -q "GreekKeyboardViewer" || true
+killall -q "GreekboardViewer" || true
 print "${c_green}Done.${c_reset}\n"
 
 # Build via build_app.sh

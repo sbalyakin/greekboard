@@ -1,5 +1,5 @@
 import XCTest
-@testable import GreekKeyboardCore
+@testable import GreekboardCore
 
 final class KeyboardStateTests: XCTestCase {
   private let layout = KeyboardLayout.greekMonotonic

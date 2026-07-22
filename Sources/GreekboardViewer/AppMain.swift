@@ -1,9 +1,9 @@
-import GreekKeyboardCore
+import GreekboardCore
 
 @main
 struct AppMain {
   @MainActor
   static func main() {
-    GreekKeyboardViewerApplication.run()
+    GreekboardViewerApplication.run()
   }
 }

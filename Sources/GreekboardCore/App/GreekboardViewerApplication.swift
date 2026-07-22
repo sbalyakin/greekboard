@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-public enum GreekKeyboardViewerApplication {
+public enum GreekboardViewerApplication {
   @MainActor
   public static func run() {
     let application = NSApplication.shared

@@ -7,7 +7,7 @@
   <key>CFBundleDisplayName</key>
   <string>Greekboard</string>
   <key>CFBundleExecutable</key>
-  <string>GreekKeyboardViewer</string>
+  <string>GreekboardViewer</string>
   <key>CFBundleIdentifier</key>
   <string>one.hatte.greekboard</string>
   <key>CFBundleInfoDictionaryVersion</key>

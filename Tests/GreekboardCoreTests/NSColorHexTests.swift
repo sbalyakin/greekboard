@@ -1,6 +1,6 @@
 import AppKit
 import XCTest
-@testable import GreekKeyboardCore
+@testable import GreekboardCore
 
 final class NSColorHexTests: XCTestCase {
   func testHexColorCreatesExpectedSRGBComponentsAndOpacity() {
