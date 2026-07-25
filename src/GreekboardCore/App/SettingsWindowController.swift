@@ -45,6 +45,15 @@ private final class SettingsToolbarSeparatorView: NSView {
   }
 }
 
+private final class SettingsSlider: NSSlider {
+  var onInteractionEnded: (() -> Void)?
+
+  override func mouseUp(with event: NSEvent) {
+    super.mouseUp(with: event)
+    onInteractionEnded?()
+  }
+}
+
 @MainActor
 final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSToolbarDelegate {
   private enum Tab: String, CaseIterable {
@@ -602,13 +611,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
     range: ClosedRange<Double>,
     action: Selector
   ) -> NSSlider {
-    let slider = NSSlider(
+    let slider = SettingsSlider(
       value: value,
       minValue: range.lowerBound,
       maxValue: range.upperBound,
       target: self,
       action: action
     )
+    slider.isContinuous = true
+    slider.onInteractionEnded = { [weak self] in
+      self?.settings.commitSliderSettings()
+    }
     slider.widthAnchor.constraint(equalToConstant: 220).isActive = true
     return slider
   }

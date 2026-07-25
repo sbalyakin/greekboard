@@ -117,10 +117,10 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
     window?.appearance = appearance.appKitAppearance
   }
 
-  func resize(to scale: Double) {
+  func resize(to scale: Double, animated: Bool) {
     applyContentSize(
       scale: KeyboardWindowMetrics.clampedScale(CGFloat(scale)),
-      animated: true
+      animated: animated
     )
   }
 

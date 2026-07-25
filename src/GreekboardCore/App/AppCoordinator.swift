@@ -164,7 +164,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
       .dropFirst()
       .removeDuplicates()
       .sink { [weak self] scale in
-        self?.keyboardWindowController.resize(to: scale)
+        self?.keyboardWindowController.resize(to: scale, animated: false)
       }
       .store(in: &cancellables)
   }

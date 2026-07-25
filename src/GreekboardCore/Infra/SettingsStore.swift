@@ -83,16 +83,16 @@ public final class SettingsStore: ObservableObject {
     didSet { defaults.set(clickTarget.rawValue, forKey: Key.clickTarget) }
   }
   @Published public var keyLabelScale = 1.0 {
-    didSet { defaults.set(keyLabelScale, forKey: Key.keyLabelScale) }
+    didSet { scheduleSliderSettingsSave() }
   }
   @Published public var appearance = KeyboardAppearance.system {
     didSet { defaults.set(appearance.rawValue, forKey: Key.appearance) }
   }
   @Published public var keyboardScale = 1.0 {
-    didSet { defaults.set(keyboardScale, forKey: Key.keyboardScale) }
+    didSet { scheduleSliderSettingsSave() }
   }
   @Published public var keyCornerRadius = 8.0 {
-    didSet { defaults.set(keyCornerRadius, forKey: Key.keyCornerRadius) }
+    didSet { scheduleSliderSettingsSave() }
   }
   @Published public var keyPressAnimation = true {
     didSet { defaults.set(keyPressAnimation, forKey: Key.keyPressAnimation) }
@@ -101,6 +101,7 @@ public final class SettingsStore: ObservableObject {
   public let keyboardLayoutIdentifier = "greek-monotonic"
 
   private let defaults: UserDefaults
+  private var sliderSettingsSaveWorkItem: DispatchWorkItem?
 
   public init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
@@ -130,6 +131,28 @@ public final class SettingsStore: ObservableObject {
 
   public func setKeyboardVisible(_ isVisible: Bool) {
     defaults.set(isVisible, forKey: Key.keyboardVisible)
+  }
+
+  public func commitSliderSettings() {
+    sliderSettingsSaveWorkItem?.cancel()
+    sliderSettingsSaveWorkItem = nil
+    saveSliderSettings()
+  }
+
+  private func scheduleSliderSettingsSave() {
+    sliderSettingsSaveWorkItem?.cancel()
+    let workItem = DispatchWorkItem { [weak self] in
+      self?.saveSliderSettings()
+    }
+    sliderSettingsSaveWorkItem = workItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
+  }
+
+  private func saveSliderSettings() {
+    defaults.set(keyLabelScale, forKey: Key.keyLabelScale)
+    defaults.set(keyboardScale, forKey: Key.keyboardScale)
+    defaults.set(keyCornerRadius, forKey: Key.keyCornerRadius)
+    sliderSettingsSaveWorkItem = nil
   }
 }
 
