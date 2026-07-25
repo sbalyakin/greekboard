@@ -1,0 +1,87 @@
+import Combine
+import Foundation
+import Testing
+@testable import GreekboardCore
+
+@MainActor
+@Test("Physical input publishes only changed state")
+func physicalInputPublishesOnlyChangedState() {
+  let viewModel = makeKeyboardViewModel()
+  let modifiers = PhysicalModifierState(
+    shift: true,
+    capsLock: false,
+    option: false,
+    control: false,
+    command: false
+  )
+  var publicationCount = 0
+  let observation = viewModel.$state.dropFirst().sink { _ in
+    publicationCount += 1
+  }
+
+  let keyCode = PhysicalKeyCode(rawValue: 0)
+  viewModel.handlePhysicalInput(.key(keyCode, isPressed: true, modifiers: modifiers))
+
+  #expect(publicationCount == 1)
+  #expect(viewModel.state.pressedPhysicalKeys == [keyCode])
+  #expect(viewModel.state.modifiers.isPhysicalShiftPressed)
+
+  viewModel.handlePhysicalInput(.key(keyCode, isPressed: true, modifiers: modifiers))
+  viewModel.handlePhysicalInput(.modifiersChanged(modifiers))
+  viewModel.handlePhysicalInput(
+    .key(PhysicalKeyCode(rawValue: 255), isPressed: true, modifiers: modifiers)
+  )
+
+  #expect(publicationCount == 1)
+  _ = observation
+}
+
+@MainActor
+@Test("Physical input reset publishes only when state changes")
+func physicalInputResetPublishesOnlyWhenStateChanges() {
+  let viewModel = makeKeyboardViewModel()
+  let modifiers = PhysicalModifierState(
+    shift: false,
+    capsLock: false,
+    option: false,
+    control: false,
+    command: false
+  )
+  var publicationCount = 0
+  let observation = viewModel.$state.dropFirst().sink { _ in
+    publicationCount += 1
+  }
+
+  viewModel.handlePhysicalInput(
+    .key(PhysicalKeyCode(rawValue: 0), isPressed: true, modifiers: modifiers)
+  )
+  viewModel.handlePhysicalInput(.reset)
+  viewModel.handlePhysicalInput(.reset)
+
+  #expect(publicationCount == 2)
+  #expect(viewModel.state.pressedPhysicalKeys.isEmpty)
+  _ = observation
+}
+
+@MainActor
+private func makeKeyboardViewModel() -> KeyboardViewModel {
+  KeyboardViewModel(
+    layout: .greekMonotonic,
+    settings: SettingsStore(),
+    insertionService: NoopTextInsertionService(),
+    applicationTracker: NoopApplicationTracker()
+  )
+}
+
+@MainActor
+private struct NoopTextInsertionService: TextInsertionServiceProtocol {
+  func insert(
+    _ request: TextInsertionRequest,
+    into processIdentifier: pid_t
+  ) async throws {}
+}
+
+@MainActor
+private final class NoopApplicationTracker: ActiveApplicationTrackingProtocol {
+  let targetProcessIdentifier: pid_t? = nil
+}

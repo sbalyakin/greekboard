@@ -73,13 +73,13 @@ public final class MacKeyboardInputMonitorAdapter: KeyboardInputMonitorProtocol 
 
     switch event.type {
     case .keyDown:
+      guard !event.isARepeat else { return }
       onEvent?(.key(keyCode, isPressed: true, modifiers: modifiers))
     case .keyUp:
       onEvent?(.key(keyCode, isPressed: false, modifiers: modifiers))
     case .flagsChanged:
       let isPressed = modifierIsPressed(keyCode, flags: event.modifierFlags)
       onEvent?(.key(keyCode, isPressed: isPressed, modifiers: modifiers))
-      onEvent?(.modifiersChanged(modifiers))
     default:
       break
     }

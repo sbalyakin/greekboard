@@ -13,6 +13,7 @@ public final class KeyboardViewModel: ObservableObject {
   private let settings: SettingsStore
   private let insertionService: any TextInsertionServiceProtocol
   private let applicationTracker: any ActiveApplicationTrackingProtocol
+  private let physicalKeyCodes: Set<PhysicalKeyCode>
 
   public init(
     layout: KeyboardLayout,
@@ -24,6 +25,7 @@ public final class KeyboardViewModel: ObservableObject {
     self.settings = settings
     self.insertionService = insertionService
     self.applicationTracker = applicationTracker
+    self.physicalKeyCodes = Set(layout.keys.compactMap(\.physicalKeyCode))
   }
 
   public func clearDraft() {
@@ -116,15 +118,19 @@ public final class KeyboardViewModel: ObservableObject {
   }
 
   public func handlePhysicalInput(_ event: PhysicalInputEvent) {
+    var nextState = state
     switch event {
     case let .key(keyCode, isPressed, modifiers):
-      state.setPhysicalKey(keyCode, isPressed: isPressed)
-      updatePhysicalModifiers(modifiers)
+      guard physicalKeyCodes.contains(keyCode) else { return }
+      nextState.setPhysicalKey(keyCode, isPressed: isPressed)
+      updatePhysicalModifiers(modifiers, in: &nextState)
     case let .modifiersChanged(modifiers):
-      updatePhysicalModifiers(modifiers)
+      updatePhysicalModifiers(modifiers, in: &nextState)
     case .reset:
-      state.resetPhysicalInput()
+      nextState.resetPhysicalInput()
     }
+    guard nextState != state else { return }
+    state = nextState
   }
 
   public func dismissInsertionError() {
@@ -145,7 +151,10 @@ public final class KeyboardViewModel: ObservableObject {
     }
   }
 
-  private func updatePhysicalModifiers(_ modifiers: PhysicalModifierState) {
+  private func updatePhysicalModifiers(
+    _ modifiers: PhysicalModifierState,
+    in state: inout KeyboardState
+  ) {
     state.updatePhysicalModifiers(
       shift: modifiers.shift,
       capsLock: modifiers.capsLock,

@@ -35,7 +35,7 @@ public struct ModifierState: Equatable, Sendable {
   }
 }
 
-public struct KeyboardState: Sendable {
+public struct KeyboardState: Equatable, Sendable {
   public private(set) var modifiers = ModifierState()
   public private(set) var activeDeadKey: DeadKey?
   public private(set) var pressedPhysicalKeys = Set<PhysicalKeyCode>()
