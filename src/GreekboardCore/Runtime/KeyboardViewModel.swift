@@ -138,7 +138,9 @@ public final class KeyboardViewModel: ObservableObject {
     switch event {
     case let .key(keyCode, isPressed, modifiers):
       guard physicalKeyCodes.contains(keyCode) else { return }
-      nextState.setPhysicalKey(keyCode, isPressed: isPressed)
+      if settings.highlightPhysicalKeyPresses {
+        nextState.setPhysicalKey(keyCode, isPressed: isPressed)
+      }
       updatePhysicalModifiers(modifiers, in: &nextState)
     case let .modifiersChanged(modifiers):
       updatePhysicalModifiers(modifiers, in: &nextState)

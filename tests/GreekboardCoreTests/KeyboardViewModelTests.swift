@@ -64,6 +64,51 @@ func physicalInputResetPublishesOnlyWhenStateChanges() {
 }
 
 @MainActor
+@Test("Physical keys do not publish when highlighting is disabled")
+func physicalKeysDoNotPublishWhenHighlightingIsDisabled() throws {
+  let suiteName = "KeyboardViewModelTests-\(UUID().uuidString)"
+  let defaults = try #require(UserDefaults(suiteName: suiteName))
+  defer { defaults.removePersistentDomain(forName: suiteName) }
+  let settings = SettingsStore(defaults: defaults)
+  settings.highlightPhysicalKeyPresses = false
+  let viewModel = makeKeyboardViewModel(settings: settings)
+  let releasedModifiers = PhysicalModifierState(
+    shift: false,
+    capsLock: false,
+    option: false,
+    control: false,
+    command: false
+  )
+  var publicationCount = 0
+  let observation = viewModel.$state.dropFirst().sink { _ in
+    publicationCount += 1
+  }
+
+  viewModel.handlePhysicalInput(
+    .key(PhysicalKeyCode(rawValue: 0), isPressed: true, modifiers: releasedModifiers)
+  )
+
+  #expect(publicationCount == 0)
+  #expect(viewModel.state.pressedPhysicalKeys.isEmpty)
+
+  let shiftModifiers = PhysicalModifierState(
+    shift: true,
+    capsLock: false,
+    option: false,
+    control: false,
+    command: false
+  )
+  viewModel.handlePhysicalInput(
+    .key(PhysicalKeyCode(rawValue: 56), isPressed: true, modifiers: shiftModifiers)
+  )
+
+  #expect(publicationCount == 1)
+  #expect(viewModel.state.pressedPhysicalKeys.isEmpty)
+  #expect(viewModel.state.modifiers.isPhysicalShiftPressed)
+  _ = observation
+}
+
+@MainActor
 @Test("Keyboard presentation uses the supplied state snapshot")
 func keyboardPresentationUsesSuppliedStateSnapshot() throws {
   let viewModel = makeKeyboardViewModel()
@@ -81,9 +126,14 @@ func keyboardPresentationUsesSuppliedStateSnapshot() throws {
 
 @MainActor
 private func makeKeyboardViewModel() -> KeyboardViewModel {
+  makeKeyboardViewModel(settings: SettingsStore())
+}
+
+@MainActor
+private func makeKeyboardViewModel(settings: SettingsStore) -> KeyboardViewModel {
   KeyboardViewModel(
     layout: .greekMonotonic,
-    settings: SettingsStore(),
+    settings: settings,
     insertionService: NoopTextInsertionService(),
     applicationTracker: NoopApplicationTracker()
   )
