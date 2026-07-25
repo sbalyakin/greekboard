@@ -44,6 +44,10 @@ public final class KeyboardViewModel: ObservableObject {
   }
 
   public func displayText(for key: KeyboardKey) -> String {
+    displayText(for: key, state: state)
+  }
+
+  func displayText(for key: KeyboardKey, state: KeyboardState) -> String {
     if let composed = state.composedText(for: key, in: layout) {
       return composed
     }
@@ -62,11 +66,19 @@ public final class KeyboardViewModel: ObservableObject {
   }
 
   public func isPressed(_ key: KeyboardKey) -> Bool {
+    isPressed(key, state: state)
+  }
+
+  func isPressed(_ key: KeyboardKey, state: KeyboardState) -> Bool {
     guard let keyCode = key.physicalKeyCode else { return false }
     return state.pressedPhysicalKeys.contains(keyCode)
   }
 
   public func isActive(_ key: KeyboardKey) -> Bool {
+    isActive(key, state: state)
+  }
+
+  func isActive(_ key: KeyboardKey, state: KeyboardState) -> Bool {
     switch key.kind {
     case let .modifier(modifier):
       switch modifier {
@@ -90,6 +102,10 @@ public final class KeyboardViewModel: ObservableObject {
   }
 
   public func isEnabled(_ key: KeyboardKey) -> Bool {
+    isEnabled(key, state: state)
+  }
+
+  func isEnabled(_ key: KeyboardKey, state: KeyboardState) -> Bool {
     switch key.kind {
     case let .modifier(modifier):
       return modifier == .shift || modifier == .capsLock || modifier == .option

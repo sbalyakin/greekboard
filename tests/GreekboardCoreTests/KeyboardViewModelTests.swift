@@ -64,6 +64,22 @@ func physicalInputResetPublishesOnlyWhenStateChanges() {
 }
 
 @MainActor
+@Test("Keyboard presentation uses the supplied state snapshot")
+func keyboardPresentationUsesSuppliedStateSnapshot() throws {
+  let viewModel = makeKeyboardViewModel()
+  let keyCode = PhysicalKeyCode(rawValue: 0)
+  let key = try #require(viewModel.layout.key(for: keyCode))
+  var snapshot = KeyboardState()
+  snapshot.toggleShift()
+  snapshot.setPhysicalKey(keyCode, isPressed: true)
+
+  #expect(viewModel.displayText(for: key) == "α")
+  #expect(viewModel.displayText(for: key, state: snapshot) == "Α")
+  #expect(!viewModel.isPressed(key))
+  #expect(viewModel.isPressed(key, state: snapshot))
+}
+
+@MainActor
 private func makeKeyboardViewModel() -> KeyboardViewModel {
   KeyboardViewModel(
     layout: .greekMonotonic,
