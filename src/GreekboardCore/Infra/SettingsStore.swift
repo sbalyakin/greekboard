@@ -94,6 +94,12 @@ public final class SettingsStore: ObservableObject {
   @Published public var keyCornerRadius = 8.0 {
     didSet { scheduleSliderSettingsSave() }
   }
+  @Published public var windowOpacityOnHover = 1.0 {
+    didSet { scheduleSliderSettingsSave() }
+  }
+  @Published public var windowOpacityOutside = 1.0 {
+    didSet { scheduleSliderSettingsSave() }
+  }
   @Published public var keyPressAnimation = true {
     didSet { defaults.set(keyPressAnimation, forKey: Key.keyPressAnimation) }
   }
@@ -122,6 +128,8 @@ public final class SettingsStore: ObservableObject {
     ) ?? .system
     keyboardScale = defaults.object(forKey: Key.keyboardScale) as? Double ?? 1
     keyCornerRadius = defaults.object(forKey: Key.keyCornerRadius) as? Double ?? 8
+    windowOpacityOnHover = defaults.object(forKey: Key.windowOpacityOnHover) as? Double ?? 1
+    windowOpacityOutside = defaults.object(forKey: Key.windowOpacityOutside) as? Double ?? 1
     keyPressAnimation = defaults.object(forKey: Key.keyPressAnimation) as? Bool ?? true
   }
 
@@ -152,6 +160,8 @@ public final class SettingsStore: ObservableObject {
     defaults.set(keyLabelScale, forKey: Key.keyLabelScale)
     defaults.set(keyboardScale, forKey: Key.keyboardScale)
     defaults.set(keyCornerRadius, forKey: Key.keyCornerRadius)
+    defaults.set(windowOpacityOnHover, forKey: Key.windowOpacityOnHover)
+    defaults.set(windowOpacityOutside, forKey: Key.windowOpacityOutside)
     sliderSettingsSaveWorkItem = nil
   }
 }
@@ -170,6 +180,8 @@ private extension SettingsStore {
     static let appearance = "settings.appearance"
     static let keyboardScale = "settings.keyboardScale"
     static let keyCornerRadius = "settings.keyCornerRadius"
+    static let windowOpacityOnHover = "settings.windowOpacityOnHover"
+    static let windowOpacityOutside = "settings.windowOpacityOutside"
     static let keyPressAnimation = "settings.keyPressAnimation"
     static let keyboardVisible = "state.keyboardVisible"
   }

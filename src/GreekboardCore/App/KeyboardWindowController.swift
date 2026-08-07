@@ -11,6 +11,7 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
   private let settings: SettingsStore
   private let permissions: MacPermissionAdapter
   private var cancellables = Set<AnyCancellable>()
+  private var isMouseInside = false
 
   init(
     viewModel: KeyboardViewModel,
@@ -74,8 +75,14 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
 
     super.init(window: panel)
     panel.delegate = self
+    panel.onMouseInsideChanged = { [weak self] isInside in
+      self?.isMouseInside = isInside
+      self?.applyWindowOpacity()
+    }
+    panel.installHoverTracking()
     installSettingsButton(on: panel)
     observeWindowChrome()
+    observeWindowOpacity()
   }
 
   @available(*, unavailable)
@@ -89,6 +96,8 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
 
   func show() {
     syncWindowChrome(animated: false)
+    isMouseInside = window?.frame.contains(NSEvent.mouseLocation) == true
+    applyWindowOpacity()
     window?.orderFrontRegardless()
     onVisibilityChanged?(true)
   }
@@ -225,6 +234,22 @@ final class KeyboardWindowController: NSWindowController, NSWindowDelegate {
     .store(in: &cancellables)
   }
 
+  private func observeWindowOpacity() {
+    Publishers.CombineLatest(settings.$windowOpacityOnHover, settings.$windowOpacityOutside)
+      .dropFirst()
+      .sink { [weak self] _, _ in
+        self?.applyWindowOpacity()
+      }
+      .store(in: &cancellables)
+    applyWindowOpacity()
+  }
+
+  private func applyWindowOpacity() {
+    window?.alphaValue = isMouseInside
+      ? CGFloat(settings.windowOpacityOnHover)
+      : CGFloat(settings.windowOpacityOutside)
+  }
+
   private func applyWindowChrome(_ chrome: WindowChromeState, animated: Bool) {
     if let panel = window as? KeyboardPanel {
       panel.allowsKeyFocus = chrome.showsLocalInputPanel
@@ -331,9 +356,36 @@ private struct WindowChromeState: Equatable {
 
 private final class KeyboardPanel: NSPanel {
   var allowsKeyFocus = false
+  var onMouseInsideChanged: ((Bool) -> Void)?
+  private var hoverTrackingArea: NSTrackingArea?
 
   override var canBecomeKey: Bool { allowsKeyFocus }
   override var canBecomeMain: Bool { false }
+
+  func installHoverTracking() {
+    guard let frameView = contentView?.superview else { return }
+    if let hoverTrackingArea {
+      frameView.removeTrackingArea(hoverTrackingArea)
+    }
+    let trackingArea = NSTrackingArea(
+      rect: frameView.bounds,
+      options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+      owner: self,
+      userInfo: nil
+    )
+    hoverTrackingArea = trackingArea
+    frameView.addTrackingArea(trackingArea)
+  }
+
+  override func mouseEntered(with event: NSEvent) {
+    super.mouseEntered(with: event)
+    onMouseInsideChanged?(true)
+  }
+
+  override func mouseExited(with event: NSEvent) {
+    super.mouseExited(with: event)
+    onMouseInsideChanged?(false)
+  }
 
   /// NSPanel closes on Escape by default; keep the keyboard visible and only resign focus.
   override func cancelOperation(_ sender: Any?) {

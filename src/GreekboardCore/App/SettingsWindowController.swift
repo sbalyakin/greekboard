@@ -118,6 +118,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
   private var appearancePopup: NSPopUpButton!
   private var keyboardScaleSlider: NSSlider!
   private var keyCornerRadiusSlider: NSSlider!
+  private var windowOpacityOnHoverSlider: NSSlider!
+  private var windowOpacityOutsideSlider: NSSlider!
   private var keyPressAnimationSwitch: NSSwitch!
 
   private var accessibilityControls: PermissionControls!
@@ -357,6 +359,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
       range: 2...14,
       action: #selector(keyCornerRadiusChanged(_:))
     )
+    windowOpacityOnHoverSlider = slider(
+      value: settings.windowOpacityOnHover,
+      range: 0.2...1,
+      action: #selector(windowOpacityOnHoverChanged(_:))
+    )
+    windowOpacityOutsideSlider = slider(
+      value: settings.windowOpacityOutside,
+      range: 0.2...1,
+      action: #selector(windowOpacityOutsideChanged(_:))
+    )
     keyPressAnimationSwitch = toggle(
       action: #selector(keyPressAnimationChanged(_:))
     )
@@ -365,6 +377,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
       rows: [
         settingsRow("Keyboard Size", accessory: keyboardScaleSlider),
         settingsRow("Key Corner Radius", accessory: keyCornerRadiusSlider),
+        settingsRow("Opacity on Mouse Hover", accessory: windowOpacityOnHoverSlider),
+        settingsRow("Opacity Outside Window", accessory: windowOpacityOutsideSlider),
         settingsRow("Key Press Animation", accessory: keyPressAnimationSwitch)
       ],
       to: stack,
@@ -695,6 +709,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
     selectItem(in: appearancePopup, representedObject: settings.appearance.rawValue)
     keyboardScaleSlider.doubleValue = settings.keyboardScale
     keyCornerRadiusSlider.doubleValue = settings.keyCornerRadius
+    windowOpacityOnHoverSlider.doubleValue = settings.windowOpacityOnHover
+    windowOpacityOutsideSlider.doubleValue = settings.windowOpacityOutside
     keyPressAnimationSwitch.state = state(for: settings.keyPressAnimation)
 
     updatePermissionControls()
@@ -846,6 +862,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTo
 
   @objc private func keyCornerRadiusChanged(_ sender: NSSlider) {
     settings.keyCornerRadius = sender.doubleValue
+  }
+
+  @objc private func windowOpacityOnHoverChanged(_ sender: NSSlider) {
+    settings.windowOpacityOnHover = sender.doubleValue
+  }
+
+  @objc private func windowOpacityOutsideChanged(_ sender: NSSlider) {
+    settings.windowOpacityOutside = sender.doubleValue
   }
 
   @objc private func keyPressAnimationChanged(_ sender: NSSwitch) {
