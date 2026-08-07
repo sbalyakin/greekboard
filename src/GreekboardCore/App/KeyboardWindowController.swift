@@ -358,33 +358,55 @@ private final class KeyboardPanel: NSPanel {
   var allowsKeyFocus = false
   var onMouseInsideChanged: ((Bool) -> Void)?
   private var hoverTrackingArea: NSTrackingArea?
+  private var titlebarHoverTrackingArea: NSTrackingArea?
 
   override var canBecomeKey: Bool { allowsKeyFocus }
   override var canBecomeMain: Bool { false }
 
   func installHoverTracking() {
     guard let frameView = contentView?.superview else { return }
-    if let hoverTrackingArea {
-      frameView.removeTrackingArea(hoverTrackingArea)
-    }
-    let trackingArea = NSTrackingArea(
-      rect: frameView.bounds,
-      options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-      owner: self,
-      userInfo: nil
+    hoverTrackingArea = installHoverTrackingArea(
+      on: frameView,
+      replacing: hoverTrackingArea
     )
-    hoverTrackingArea = trackingArea
-    frameView.addTrackingArea(trackingArea)
+
+    if let titlebar = standardWindowButton(.closeButton)?.superview {
+      titlebarHoverTrackingArea = installHoverTrackingArea(
+        on: titlebar,
+        replacing: titlebarHoverTrackingArea
+      )
+    }
   }
 
   override func mouseEntered(with event: NSEvent) {
     super.mouseEntered(with: event)
-    onMouseInsideChanged?(true)
+    updateMouseInsideState()
   }
 
   override func mouseExited(with event: NSEvent) {
     super.mouseExited(with: event)
-    onMouseInsideChanged?(false)
+    updateMouseInsideState()
+  }
+
+  private func installHoverTrackingArea(
+    on view: NSView,
+    replacing existingArea: NSTrackingArea?
+  ) -> NSTrackingArea {
+    if let existingArea {
+      view.removeTrackingArea(existingArea)
+    }
+    let trackingArea = NSTrackingArea(
+      rect: view.bounds,
+      options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+      owner: self,
+      userInfo: nil
+    )
+    view.addTrackingArea(trackingArea)
+    return trackingArea
+  }
+
+  private func updateMouseInsideState() {
+    onMouseInsideChanged?(frame.contains(NSEvent.mouseLocation))
   }
 
   /// NSPanel closes on Escape by default; keep the keyboard visible and only resign focus.
